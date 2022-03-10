@@ -1,5 +1,8 @@
 # quantum-life
-
+<p align="center">
+    REPOSITORY AND READ ME UNDER CONSTRUCTION
+    <br />
+  </p>
 
 <!-- PROJECT LOGO -->
 <br />
