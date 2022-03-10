@@ -1,4 +1,4 @@
-# quantum-life
+# Evolving Quantum Circuits
 <p align="center">
     REPOSITORY AND READ ME UNDER CONSTRUCTION
     <br />
