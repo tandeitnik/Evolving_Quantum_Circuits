@@ -39,5 +39,5 @@ Summary
  <sub><b>Daniel Tandeitnik</b></sub></a>
 
 
-[![Linkedin Badge](https://img.shields.io/badge/-Daniel-Tandeitnik-blue?style=flat-square&logo=Linkedin&logoColor=white&link=https://www.linkedin.com/in/tandeitnik/)](https://www.linkedin.com/in/tandeitnik/) [![Gmail Badge](https://img.shields.io/badge/-tandeitnik@gmail.com-c14438?style=flat-square&logo=Gmail&logoColor=white&link=mailto:tandeitnik@gmail.com)](mailto:tandeitnik@gmail.com)
+[![Linkedin Badge](https://img.shields.io/badge/-Daniel_Tandeitnik-blue?style=flat-square&logo=Linkedin&logoColor=white&link=https://www.linkedin.com/in/tandeitnik/)](https://www.linkedin.com/in/tandeitnik/) [![Gmail Badge](https://img.shields.io/badge/-tandeitnik@gmail.com-c14438?style=flat-square&logo=Gmail&logoColor=white&link=mailto:tandeitnik@gmail.com)](mailto:tandeitnik@gmail.com)
 
