@@ -2,42 +2,12 @@
 
 import numpy as np
 import random
-#from qiskit import QuantumCircuit, assemble, Aer
-#from qiskit.tools.visualization import circuit_drawer
+from qiskit import QuantumCircuit, assemble, Aer
+from qiskit.tools.visualization import circuit_drawer
 import copy
 from math import ceil
 import itertools
-#import qecc_functions as qf
-#import evolution_functions as ef
 import utility_functions as uf
-
-### LIST OF FUNTIONS ###
-#
-# randcirc(N,T,adj_mat) = circuit
-# gene_express(N,circ) = circuit
-# final_state(N,circ) = out_state
-# stabilizer(N,circuit) = stabilizer, global_phase
-# measurement(M,gp,operator,qubit) = M_post_measurement, gp_post_measurement
-# stabilizer_literal(stab_bit, global_phase) = stab_lit
-# stabilizer_bit(stab_lit) = M, gp
-# stabilizer_group(M,gp) = stab_group, gp_group, stab_lit
-# stabilizer_canonical(stabilizer,global_phase) = stab_can, gp_can
-# basisnormcirc(M, gp) = C, M_c_l
-# check_orthogonality(circ_1,circ_2,N) = orthogonality
-# inner_product(circ_1,circ_2,N) = inner_product
-# perpendicular_circuits(N,circ) = perp_circuits
-# circuit_reverser(C,M_c_l) = C_reversed
-# generators2circuit(M,gp) = C_reversed
-# entropy_region(M,region) = entropy
-# mutual_information(N,circuit,region_A,region_B) = m_info
-# topological_entropy(stab, N, M, draws) = S
-# error_operator(adj_mat,size) = error_string
-# mean_entropy(N,circ) = mean_entropy
-# depth(N,circ) = D
-# remove_id(circ) = new_circ
-# simplify_circuit(N,circ,loops) = simplified_circuit
-# draw_circuit(N,circ, file_name, scale, fold)
-# random_stabilizer(N,T) = circuit
 
 def randcirc(N,T,adj_mat):
     
@@ -61,7 +31,6 @@ def randcirc(N,T,adj_mat):
     circuit = np.array(circuit)
     
     return circuit
-
 
 def gene_express(N,circ):
     
@@ -261,8 +230,7 @@ def stabilizer_literal(stab_bit, global_phase):
     return stab_lit
 
 def stabilizer_bit(stab_lit):
-    
-    
+
     N = np.shape(stab_lit)[1]-1
     n_op = np.shape(stab_lit)[0]
     
@@ -288,7 +256,6 @@ def stabilizer_bit(stab_lit):
     return M, gp
 
 def stabilizer_group(N,circuit, stab_group = None, gp_group = None):
-    
 
     #Calculates the initial stabilizer tableau if not provided. The user
     #may provide the initial tableau if it is going to be evaluated many
@@ -885,151 +852,6 @@ def inner_product(circ_1,circ_2,N):
 
     return inner_product
 
-def orthogonal_states(N,circuit, global_phase_initial = None):
-    
-    #Since the tableau for all states is the same, only the
-    #global phases change (and are all combinations of "+1" and "-1"),
-    #it suffices to calculate 
-    
-    if str(type(global_phase_initial)) == "<class 'NoneType'>":
-        
-        #each element is a different combination of "+1" and "-1" global phase
-        global_phase_initial = np.array(list(itertools.product([0, 2], repeat=N))[1:])
-        
-    stabilizer = np.zeros([N,2*N]) #each element share the same tableau
-    for i in range(N):
-        stabilizer[i,2*i+1] = 1
-        
-    #each line of global_phase is the final global phase of each orthogonal state
-    global_phase = np.copy(global_phase_initial)
-    
-    if len(circuit) != 0:
-        
-        for i in range(len(circuit)): #running through circuit
-        
-            if circuit[i,0] == 1: #Hadamard
-            
-                for j in range(N):
-                    
-                    if  stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 1:
-                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
-                        
-                    temp_x = stabilizer[j,2*circuit[i,1]]
-                    stabilizer[j,2*circuit[i,1]] = stabilizer[j,2*circuit[i,1]+1]
-                    stabilizer[j,2*circuit[i,1]+1] = temp_x
-                    
-            elif circuit[i,0] == 2: #Phase
-                
-                for j in range(N):
-                    
-                    if  stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 1:
-                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
-                
-                    stabilizer[j,2*circuit[i,1]+1] = np.mod(stabilizer[j,2*circuit[i,1]]+stabilizer[j,2*circuit[i,1]+1],2)
-            
-            elif circuit[i,0] == 3: #CNOT (left)
-            
-                 for j in range(N):
-                     
-                    #this if tests if the generator pre-conjugation is Y_1*Y_2 or X_1*Z_2
-                    if (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 1 and stabilizer[j,2*circuit[i,2]] == 1 and stabilizer[j,2*circuit[i,2]+1] == 1) or (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 0 and stabilizer[j,2*circuit[i,2]] == 0 and stabilizer[j,2*circuit[i,2]+1] == 1):
-                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
-                        
-        
-                    stabilizer[j,2*circuit[i,2]] = np.mod(stabilizer[j,2*circuit[i,2]] + stabilizer[j,2*circuit[i,1]] ,2)
-                    stabilizer[j,2*circuit[i,1]+1] = np.mod(stabilizer[j,2*circuit[i,1]+1] + stabilizer[j,2*circuit[i,2]+1],2)
-            
-            elif circuit[i,0] == 4: #X
-            
-                for j in range(N):
-                    
-                     if (stabilizer[j,2*circuit[i,1]] == 0 and stabilizer[j,2*circuit[i,1]+1] == 1) or (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 1):
-                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
-                        
-            elif circuit[i,0] == 5: #Y
-            
-                for j in range(N):
-                    
-                     if (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 0) or (stabilizer[j,2*circuit[i,1]] == 0 and stabilizer[j,2*circuit[i,1]+1] == 1):
-                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
-                        
-            elif circuit[i,0] == 6: #Z
-            
-                for j in range(N):
-                    
-                     if (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 0) or (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 1):
-                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
-
-    return stabilizer, global_phase
-
-
-def circuit_reverser(C,M_c_l):
-    
-    N = len(M_c_l)
-
-    x_block = []
-    
-    #forming x_block
-    
-    for i in range(N):
-        if M_c_l[i,N] == -1: #if true, apply X to change |1> to |0>
-            x_block.append([4,i,0])
-            
-    #notice that the Hadamards blocks don't need any operation to be reversed        
-    
-    #reversing order of CNOT block contained in C[1]
-    
-    CNOT_block_reversed = copy.deepcopy( C[1] )
-    CNOT_block_reversed.reverse()
-    
-    #reversing order of CZ block contained in C[2]
-    
-    CZ_block_reversed = copy.deepcopy( C[2] )
-    CZ_block_reversed.reverse()
-    
-    #reversing order of phase block contained in C[3]
-    
-    phase_block_reversed = []
-    
-    for i in range(len(C[3])):
-        for j in range(3):
-            phase_block_reversed.append(C[3][i])
-            
-    #mounting the reversed circuit
-    
-    C_array_reversed = []
-    if len(x_block) != 0:
-        for k in range(len(x_block)):
-            C_array_reversed.append(x_block[k])
-    if len(C[4]) != 0: #appending Hadamard block 5
-        for k in range(len(C[4])):
-            C_array_reversed.append(C[4][k])
-    if len(phase_block_reversed) != 0:
-        for k in range(len(phase_block_reversed)):
-            C_array_reversed.append(phase_block_reversed[k])
-    if len(CZ_block_reversed) != 0:
-        for k in range(len(CZ_block_reversed)):
-            C_array_reversed.append(CZ_block_reversed[k])
-    if len(CNOT_block_reversed) != 0:
-        for k in range(len(CNOT_block_reversed)):
-            C_array_reversed.append(CNOT_block_reversed[k])
-    if len(C[0]) != 0: #appending Hadamard block 1
-        for k in range(len(C[0])):
-            C_array_reversed.append(C[0][k])
-    
-    C_array_reversed = np.array(C_array_reversed)
-    
-    C_reversed = [x_block, C[4], phase_block_reversed, CZ_block_reversed, CNOT_block_reversed, C[0], C_array_reversed]
-        
-    return C_reversed
-    
-def generators2circuit(M,gp):
-    
-    C, M_c_l = basisnormcirc(M, gp)
-    
-    C_reversed = circuit_reverser(C,M_c_l)
-    
-    return C_reversed
 
 def entropy_region(N,circuit,region):
     
@@ -1064,162 +886,7 @@ def mutual_information(N,circuit,region_A,region_B):
     m_info = entropy_A + entropy_B - entropy_AB
     
     return m_info
-    
-def topological_entropy(stab, N, M, draws):
-    
-    rep = np.zeros([N,M]).astype(int)
-    
-    for i in range(N):
-        for j in range(M):
-            rep[i,j] = i*(2*M+1) + j
-            
-    p_row = ceil(N/2.)-1
-    p_col = ceil(M/2.)-1
-    
-    #Mounting A region
-    
-    A = [rep[p_row,p_col]]
-    
-    for i in range(p_row):
-        if i == 0:
-            for j in range(p_col,M):
-                if j == p_col:
-                    A.append(A[-1] - (M + 1))
-                    A.append(A[-1] - M)
-                    A.append(A[-1] + M+1)
-                else:
-                    A.append(A[-1] - M)
-                    A.append(A[-2] + M+1)
-                    A.append(A[-1] - M)
-            for j in range(0,p_col):
-                if j == 0:
-                    A.append(A[0]-1)
-                    A.append(A[-1] - (2*M+1))
-                    A.append(A[-1] + M)
-                else:
-                    A.append(A[-1] - (M+1))
-                    A.append(A[-2] + M)
-                    A.append(A[-1] - (M+1))
-        else:
-            
-            A.append(rep[p_row-i,0] + M)
-            
-            for j in range(M):
-    
-                A.append(A[-1] - M)
-                A.append(A[-1]+ M+1)
-
-    #Mounting B region
-    
-    for i in range(p_col+1,M):
-        if i == p_col+1:
-            B = [rep[p_row,p_col] + M + 1]
-            B.append(B[-1] + M +1)
-            B.append(B[-1] - M)
-            
-            for j in range(p_row+1,N):
-                B.append(B[-2]+M)
-                B.append(B[-1] + M+1)
-                B.append(B[-1] - M)
-                
-        else:
-            for j in range(p_row,N):
-                if j == p_row:
-                    B.append(rep[p_row,p_col] + 2*M + +2 + 1*(i - (p_col+1)))
-                    B.append(B[-1] - M)
-                else:
-                    B.append(B[-2]+2*M+1)
-                    B.append(B[-1] - M)
-                
-    #Mounting C region
-    
-    for i in range(p_col+1):
-        if i == 0:
-            C = [rep[p_row,p_col] + M , rep[p_row,p_col] + 2*M+1]
-            
-            for j in range(p_row+1,N):
-                C.append(C[-1] + M)
-                C.append(C[-1] + M + 1)
-                
-        else:
-            for j in range(p_row,N):
-                if j == p_row:
-                    C.append(rep[p_row,p_col] + M - 1*i)
-                    C.append(C[-1] + M+1)
-                else:
-                    C.append(C[-1] + M)
-                    C.append(C[-1] + M+1)
          
-    S = []           
-         
-    for i in range(draws):
-    
-        A_size = np.random.randint(4,len(A)+1)
-        B_size = np.random.randint(5,len(B)+1)
-        C_size = np.random.randint(5,len(C)+1) #region C must have at least 2 qubits!
-        
-        
-        Region_A = A[0:A_size]
-        Region_B = B[0:B_size]
-        Region_C = C[0:C_size]
-        
-        Region_AB = Region_A + Region_B
-        Region_AC = Region_A + Region_C
-        Region_BC = Region_B + Region_C
-        Region_ABC = Region_A + Region_B + Region_C
-        
-        ent_A = entropy_region(stab, Region_A)
-        ent_B = entropy_region(stab, Region_B)
-        ent_C = entropy_region(stab, Region_C)
-        ent_AB = entropy_region(stab, Region_AB)
-        ent_BC = entropy_region(stab, Region_BC)
-        ent_AC = entropy_region(stab, Region_AC)
-        ent_ABC = entropy_region(stab, Region_ABC)
-        
-        S_temp = ent_A + ent_B + ent_C - ent_AB - ent_BC - ent_AC + ent_ABC 
-        
-        if S_temp != 0:
-            S.append(S_temp)
-            
-    if len(S) != 0:
-        S = set(S)
-    else:
-        S = 0
-    
-    return S
-
-def error_operator(adj_mat,size):
-    
-    #returns an error circuit
-
-    candidates = range(len(adj_mat))
-    qubit_seed = random.sample(candidates,  1)[0]
-    error = random.sample([4,6],1)[0]
-    error_string = np.array([error,qubit_seed,0])
-    
-    last_qubit = error_string[1]
-    b_last_qubit = -1
-    
-    for i in range(size-1):
-        
-        search = 0
-        
-        while search == 0:
-            
-            next_qubit = random.sample(candidates,  1)[0]
-            
-            if adj_mat[last_qubit,next_qubit] == 1 and next_qubit != b_last_qubit:
-                
-                error_string = np.vstack([error_string,[error,next_qubit,0]])
-                search = 1
-                
-        last_qubit = error_string[-1,1]
-        b_last_qubit = error_string[-2,1]
-    
-    
-        
-    return error_string
-     
 def mean_entropy(N,circ):
     
     ''' 
@@ -1260,15 +927,15 @@ def depth(N,circuit):
     
     return D
 
-# def depth(N,circ):
+def depth_qiskit(N,circ):
     
-#     ''' 
-#     evaluates the depth of a given circuit
-#     '''
+     ''' 
+     evaluates the depth of a given circuit using qiskit
+     '''
     
-#     c_qiskit = gene_express(N,circ)
-#     D = c_qiskit.depth()
-#     return D
+     c_qiskit = gene_express(N,circ)
+     D = c_qiskit.depth()
+     return D
 
 def remove_id(circ):
     
@@ -1279,67 +946,7 @@ def remove_id(circ):
     
     return new_circ.astype(int)
 
-def simplify_circuit(N,circ,loops):
-    
-    circuit = np.copy(circ[-1])
-    circuit = remove_id(circuit)
-    simplified_circuit = np.copy(circuit)
-    simplified_circuit = simplified_circuit.astype(int)
-    
-    for i in range(loops):
-        
-        pos = range(len(simplified_circuit))
-        p_1 = random.sample(pos,  1)[0]
-        p_2 = random.sample(pos,  1)[0]
-        original_gate_1 = simplified_circuit[p_1,0]
-        original_gate_2 = simplified_circuit[p_2,0]
-        simplified_circuit[p_1,0] = 0
-        simplified_circuit[p_2,0] = 0
-        if inner_product(circuit,simplified_circuit,N) == 1:
-            simplified_circuit = remove_id(simplified_circuit)
-            simplified_circuit = simplified_circuit.astype(int)
-        else:
-            simplified_circuit[p_1,0] = int(original_gate_1)
-            simplified_circuit[p_2,0] = int(original_gate_2)
-         
-        # pos = range(len(simplified_circuit))
-        # p_1 = random.sample(pos,  1)[0]
-        # original_gate_1 = simplified_circuit[p_1,0]
-        # simplified_circuit[p_1,0] = 0
-        # if inner_product(circuit,simplified_circuit,N) == 1:
-        #     simplified_circuit = remove_id(simplified_circuit)
-        #     simplified_circuit = simplified_circuit.astype(int)
-        # else:
-        #     simplified_circuit[p_1,0] = int(original_gate_1)
-            
-    return simplified_circuit.astype(int)
-
 def draw_circuit(N,circ, file_name, scale, fold):
     q_circ = gene_express(N,circ)
     circuit_drawer(q_circ, scale=scale, filename=file_name, style={'backgroundcolor': '#EEEEEE'}, output='mpl', interactive=False, plot_barriers=True, reverse_bits=False, justify=None, vertical_compression='high', idle_wires=True, with_layout=False, fold=fold, ax=None, initial_state=True, cregbundle=True)
-    return 
-
-def random_stabilizer(N,T):
-    
-    circuit = []
-    
-    for i in range(T):
-        
-        for j in range(N):
-            
-            operation = np.random.randint(0,4)
-            
-            if operation == 3:
-                targets = list(range(N))
-                targets.remove(j)
-                target = random.sample(targets,  1)[0]
-                
-                circuit.append([operation,j,target])
-                
-            else:
-                
-                circuit.append([operation,j,0])
-                
-    circuit = np.array(circuit)
-    
-    return circuit
+    return
