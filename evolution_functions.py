@@ -10,54 +10,288 @@ import random
 ## FITNESS FUNCTIONS ##
 #######################
 
-def fitness_qecc(N,circuit,t,errors_literal,affected_qubits):
+def fitness_qecc(N,circuit,t,errors_literal,affected_qubits,stab_group,gp_group,stab_group_X, gp_group_X):
 
-    #in computational basis
-    codeword_0 = np.copy(circuit)
-    codeword_1 = np.zeros([len(circuit)+1,3])
-    codeword_1[0,:] = np.array([4,0,0])
-    codeword_1[1:,:] = circuit
-    codeword_1 = codeword_1.astype(int)
+    #primeiro eu gero o grupo do circuito, vou precisar desse grupo para calcular
+    #o phase flip
+    stab_group_circuit, gp_group_circuit, stab_lit_circuit = sf.stabilizer_group(N,circuit,stab_group, gp_group)
 
-    codewords = [codeword_0,codeword_1]
+    #calculo do menor número de literais num stabilizer - faço esse calculo para
+    #ter um low bound nos literais 
+    literals = np.zeros(2**N-1)
 
-    #in diagonal basis
-    codeword_0 = np.zeros([len(circuit)+1,3])
-    codeword_0[0,:] = np.array([1,0,0])
-    codeword_0[1:,:] = circuit
-    codeword_0 = codeword_0.astype(int)
-
-    codeword_1 = np.zeros([len(circuit)+2,3])
-    codeword_1[0,:] = np.array([4,0,0])
-    codeword_1[1,:] = np.array([1,0,0])
-    codeword_1[2:,:] = circuit
-    codeword_1 = codeword_1.astype(int)
-
-    codewords_diagonal = [codeword_0,codeword_1]
-    
-    #this part of the code is to speed up
-    stab_lit  = []
- 
-    for i in range(len(codewords)):
+    for k in range(2**N-1):
         
-        M , gp = sf.stabilizer(N, codewords[i])
-        stab_group, gp_group, stab_lit_ = sf.stabilizer_group(M,gp)
-
-        stab_lit.append(stab_lit_)
-        
-    stab_set = [{tuple(stab_lit[j][i,:]) for i in range(len(stab_lit[j]))} for j in range(len(codewords))]
+        literals[k] = N - len(uf.find_literal('I',stab_lit_circuit[k,:]))
+        if literals[k] == 1:
+            min_lit = 1
+            break
             
-
-    c_d, t_d, css_group_d, css_d = qf.correctability_degree(N,codewords,t,errors_literal,affected_qubits,stab_set)
-    f_d = qf.phase_distance(N,codewords_diagonal,stab_set)
-    p_d = qf.phase_distance(N,codewords,stab_set)
-    #D   = sf.depth(N,circuit)
-    
-    fitness = (1+c_d)**10  + ( (f_d*p_d) /(np.sqrt(abs(f_d-p_d))+1))/81  + (1+css_d)**10 #+ t_d + 1/D
-    
-    #fitness = (c_d/D)#*( (f_d*p_d)**2 /(np.sqrt(abs(f_d-p_d))+1))
+    if k == 2**N-2:
+        min_lit = min(literals)
         
-    return fitness
+    #agora vou descobrir os operadores de bit-flip.
+
+    stab_group_temp_X = np.copy(stab_group_X)
+    gp_group_temp_X = np.copy(gp_group_X)
+
+    ###################################################
+    #applying the circuit to the logical operators  X##
+    ###################################################
+
+    if len(circuit) != 0:
+
+        for i in range(len(circuit)): #running through circuit
+        
+            if circuit[i,0] == 1: #Hadamard
+            
+                for j in range(2**N-1):
+                    
+                    if  stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1:
+                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
+                        
+                    temp_x = stab_group_temp_X[j,2*circuit[i,1]]
+                    stab_group_temp_X[j,2*circuit[i,1]] = stab_group_temp_X[j,2*circuit[i,1]+1]
+                    stab_group_temp_X[j,2*circuit[i,1]+1] = temp_x
+                    
+            elif circuit[i,0] == 2: #Phase
+                
+                for j in range(2**N-1):
+                    
+                    if  stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1:
+                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
+                
+                    stab_group_temp_X[j,2*circuit[i,1]+1] = np.mod(stab_group_temp_X[j,2*circuit[i,1]]+stab_group_temp_X[j,2*circuit[i,1]+1],2)
+            
+            elif circuit[i,0] == 3: #CNOT (left)
+            
+                 for j in range(2**N-1):
+                     
+                    #this if tests if the generator pre-conjugation is Y_1*Y_2 or X_1*Z_2
+                    if (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1 and stab_group_temp_X[j,2*circuit[i,2]] == 1 and stab_group_temp_X[j,2*circuit[i,2]+1] == 1) or (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 0 and stab_group_temp_X[j,2*circuit[i,2]] == 0 and stab_group_temp_X[j,2*circuit[i,2]+1] == 1):
+                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
+                        
+            
+                    stab_group_temp_X[j,2*circuit[i,2]] = np.mod(stab_group_temp_X[j,2*circuit[i,2]] + stab_group_temp_X[j,2*circuit[i,1]] ,2)
+                    stab_group_temp_X[j,2*circuit[i,1]+1] = np.mod(stab_group_temp_X[j,2*circuit[i,1]+1] + stab_group_temp_X[j,2*circuit[i,2]+1],2)
+            
+            elif circuit[i,0] == 4: #X
+            
+                for j in range(2**N-1):
+                    
+                     if (stab_group_temp_X[j,2*circuit[i,1]] == 0 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1) or (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1):
+                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
+                        
+            elif circuit[i,0] == 5: #Y
+            
+                for j in range(2**N-1):
+                    
+                     if (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 0) or (stab_group_temp_X[j,2*circuit[i,1]] == 0 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1):
+                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
+                        
+            elif circuit[i,0] == 6: #Z
+            
+                for j in range(2**N-1):
+                    
+                     if (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 0) or (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1):
+                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
+
+    stab_lit_comp = [['I' for columns in range(N+1)] for rows in range(len(gp_group_temp_X))]
+        
+    for i in range(len(gp_group_temp_X)):
+        for j in range(N):
+            if stab_group_temp_X[i,2*j] == 0 and stab_group_temp_X[i,2*j+1] == 1:
+                stab_lit_comp[i][j] = 'Z'
+            elif stab_group_temp_X[i,2*j] == 1 and stab_group_temp_X[i,2*j+1] == 0:
+                stab_lit_comp[i][j] = 'X'
+            elif stab_group_temp_X[i,2*j] == 1 and stab_group_temp_X[i,2*j+1] == 1:
+                stab_lit_comp[i][j] = 'Y'
+                
+        if gp_group_temp_X[i] == 0:
+            stab_lit_comp[i][-1] = '1'
+        elif gp_group_temp_X[i] == 1:
+            stab_lit_comp[i][-1] = 'i'
+        elif gp_group_temp_X[i] == 2:
+            stab_lit_comp[i][-1] = '-1'
+        else:
+            stab_lit_comp[i][-1] = '-i'
+            
+    stab_lit_comp = np.array(stab_lit_comp)
+
+    #o bit flip distance é calculado
+    bit_flip_distance = np.array([N - len(uf.find_literal('I',stab_lit_comp[i,:])) for i in range(len(stab_lit_comp))])
+
+    #Agora vem o calculo do phase-flip. A ideia é a seguinte: eu sei que os 
+    #operadores de phase-flip são os stabilizers com a fase trocada. Eu tenho
+    #a lista dos stabilziers em stab_lit_circuit e eu tenho a lista dos operadores
+    #de bit-flip lógico em stab_lit_comp. Agora, seja um dos operadores de bit-flip
+    #U que será aplicado ao circuito para transformar ele no estado ortogonal. Para
+    #cada S_i do grupo de stabilizer do circuito, será feito US_iU onde o efeito será
+    #trocar ou não a fase global já que U é um operador de Pauli geral. Para saber se
+    #a fase foi trocada, podemos testar a comutação entre U e cada S_i: se eles comutam
+    #a fase não foi trocada, se eles não comutam a fase foi trocada, pois não comutar
+    #significa que U e S_i se interceptam em um número ímpar de letras de Pauli, portanto
+    #o resultado final de US_iU terá um fator -1 multiplicando.
+
+    #O procedimento então é o seguinte: para cada U_i pertecente a stab_lit_comp, eu
+    #testo sua comutatividade para cada S_i pertecente a stab_lit_circuit. Se o
+    #não comutar, eu registro o peso de S_i. No final será o menor peso de todos re-
+    #gistrados. Já que eu calculei o low bound do peso em min_lit, se eu encontrar
+    #um S_i que não comuta com peso igual a min_lit, eu posso parar a busca e já registrar
+    #o peso mínimo
+
+    phase_flip_distance = np.ones(2**N-1)*min_lit
+
+    for i in range(len(stab_lit_comp)):
+        
+        phase_temp = []
+        
+        for j in range(len(stab_lit_circuit)):
+            
+            if uf.pauli_commutation(stab_lit_comp[i,:N],stab_lit_circuit[j,:N]) == -1:
+                
+                phase_temp.append(N - len(uf.find_literal('I',stab_lit_circuit[j,:])))
+                
+                if phase_temp[-1] == min_lit:
+                    break
+                
+        if j == len(stab_lit_circuit)-1:
+            
+            phase_flip_distance[i] = min(phase_temp)
+            
+    f_d = [ 1/(abs(bit_flip_distance[i]-phase_flip_distance[i])+1) for i in range(2**N-1)]        
+
+    D = sf.depth(N,circuit)
+
+    stab_lit_circuit_set = {tuple(stab_lit_circuit[i,:]) for i in range(2**N-1)}
+
+    fitness = []
+
+    for k in range(2**N-1):
+        
+        if f_d[k] == max(f_d):
+
+            stab_group_ort = np.copy(stab_group_circuit)
+            gp_group_ort = np.copy(gp_group_circuit)
+            
+            bit_flip_operator = stab_lit_comp[k,:N]
+            
+            circuit_ort = np.zeros([N - len(uf.find_literal('I',bit_flip_operator)),3])
+
+            count = 0
+            
+            for i in range(N):
+                
+                if bit_flip_operator[i] == 'X':
+                    circuit_ort[count,:] = np.array([4,i,0])
+                    count += 1
+                    
+                elif bit_flip_operator[i] == 'Y':
+                    circuit_ort[count,:] = np.array([5,i,0])
+                    count += 1
+                    
+                elif bit_flip_operator[i] == 'Z':
+                    circuit_ort[count,:] = np.array([6,i,0])
+                    count += 1
+            
+            circuit_ort = circuit_ort.astype(int)
+            
+            ###################################################
+            #applying the bit-flip operator to the circuit   ##
+            ###################################################
+            
+            if len(circuit_ort) != 0:
+            
+                for i in range(len(circuit_ort)): #running through circuit_ort
+                
+                    if circuit_ort[i,0] == 1: #Hadamard
+                    
+                        for j in range(2**N-1):
+                            
+                            if  stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1:
+                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
+                                
+                            temp_x = stab_group_ort[j,2*circuit_ort[i,1]]
+                            stab_group_ort[j,2*circuit_ort[i,1]] = stab_group_ort[j,2*circuit_ort[i,1]+1]
+                            stab_group_ort[j,2*circuit_ort[i,1]+1] = temp_x
+                            
+                    elif circuit_ort[i,0] == 2: #Phase
+                        
+                        for j in range(2**N-1):
+                            
+                            if  stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1:
+                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
+                        
+                            stab_group_ort[j,2*circuit_ort[i,1]+1] = np.mod(stab_group_ort[j,2*circuit_ort[i,1]]+stab_group_ort[j,2*circuit_ort[i,1]+1],2)
+                    
+                    elif circuit_ort[i,0] == 3: #CNOT (left)
+                    
+                         for j in range(2**N-1):
+                             
+                            #this if tests if the generator pre-conjugation is Y_1*Y_2 or X_1*Z_2
+                            if (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1 and stab_group_ort[j,2*circuit_ort[i,2]] == 1 and stab_group_ort[j,2*circuit_ort[i,2]+1] == 1) or (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 0 and stab_group_ort[j,2*circuit_ort[i,2]] == 0 and stab_group_ort[j,2*circuit_ort[i,2]+1] == 1):
+                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
+                                
+                    
+                            stab_group_ort[j,2*circuit_ort[i,2]] = np.mod(stab_group_ort[j,2*circuit_ort[i,2]] + stab_group_ort[j,2*circuit_ort[i,1]] ,2)
+                            stab_group_ort[j,2*circuit_ort[i,1]+1] = np.mod(stab_group_ort[j,2*circuit_ort[i,1]+1] + stab_group_ort[j,2*circuit_ort[i,2]+1],2)
+                    
+                    elif circuit_ort[i,0] == 4: #X
+                    
+                        for j in range(2**N-1):
+                            
+                             if (stab_group_ort[j,2*circuit_ort[i,1]] == 0 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1) or (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1):
+                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
+                                
+                    elif circuit_ort[i,0] == 5: #Y
+                    
+                        for j in range(2**N-1):
+                            
+                             if (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 0) or (stab_group_ort[j,2*circuit_ort[i,1]] == 0 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1):
+                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
+                                
+                    elif circuit_ort[i,0] == 6: #Z
+                    
+                        for j in range(2**N-1):
+                            
+                             if (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 0) or (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1):
+                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
+            
+            stab_lit_ort = [['I' for columns in range(N+1)] for rows in range(2**N-1)]
+                
+            for i in range(2**N-1):
+                for j in range(N):
+                    if stab_group_ort[i,2*j] == 0 and stab_group_ort[i,2*j+1] == 1:
+                        stab_lit_ort[i][j] = 'Z'
+                    elif stab_group_ort[i,2*j] == 1 and stab_group_ort[i,2*j+1] == 0:
+                        stab_lit_ort[i][j] = 'X'
+                    elif stab_group_ort[i,2*j] == 1 and stab_group_ort[i,2*j+1] == 1:
+                        stab_lit_ort[i][j] = 'Y'
+                        
+                if gp_group_ort[i] == 0:
+                    stab_lit_ort[i][-1] = '1'
+                elif gp_group_ort[i] == 1:
+                    stab_lit_ort[i][-1] = 'i'
+                elif gp_group_ort[i] == 2:
+                    stab_lit_ort[i][-1] = '-1'
+                else:
+                    stab_lit_ort[i][-1] = '-i'
+                    
+            stab_lit_ort = np.array(stab_lit_ort)
+
+            stab_lit_ort_set = {tuple(stab_lit_ort[i,:]) for i in range(2**N-1)}
+
+            stab_set = [stab_lit_circuit_set,stab_lit_ort_set]
+            
+            #c_d, t_d, css_group_d, css_d = qf.correctability_degree(N,t,errors_literal,affected_qubits,stab_set)
+            c_d = qf.correctability_degree(N,t,errors_literal,affected_qubits,stab_set)
+            #appending the overall fitness score 
+            fitness.append((1+c_d)**10+1/D+min(bit_flip_distance[k],phase_flip_distance[k]))
+            
+            if c_d == 1:
+                break
+            
+    return(max(fitness))
 
 
 ####################################
@@ -158,7 +392,7 @@ def crossover(population,selected_idx):
 ## SELECTION FUNCTIONS ##
 #########################
 
-def refresh_population(population,M,N,T,adj_mat,t,errors_literal,affected_qubits,death_rate):
+def refresh_population(population,M,N,T,adj_mat,t,errors_literal,affected_qubits,death_rate,stab_group, gp_group,stab_group_X, gp_group_X):
         
     
     fitness_array = np.zeros([len(population),2])
@@ -179,7 +413,7 @@ def refresh_population(population,M,N,T,adj_mat,t,errors_literal,affected_qubits
     for i in range(int(M*death_rate)):
         
         rand_circuit = sf.randcirc(N,T,adj_mat)
-        fitness = fitness_qecc(N,rand_circuit,t,errors_literal,affected_qubits)
+        fitness = fitness_qecc(N,rand_circuit,t,errors_literal,affected_qubits,stab_group, gp_group,stab_group_X, gp_group_X)
     
         individual = [rand_circuit,fitness]
         population.append(individual)
@@ -259,7 +493,7 @@ def ind_selection(n_ind,population):
 ###################
 
 
-def circle_of_life(progenitors,population,N,adj_mat,mutation_rate,crossover_rate,t,errors_literal,affected_qubits,mutation_density):    
+def circle_of_life(progenitors,population,N,adj_mat,mutation_rate,crossover_rate,t,errors_literal,affected_qubits,mutation_density,stab_group, gp_group,stab_group_X, gp_group_X):    
 
     #select progenitors
     selected_idx = ind_selection(progenitors,population)
@@ -296,8 +530,8 @@ def circle_of_life(progenitors,population,N,adj_mat,mutation_rate,crossover_rate
             offspring_B = mutation(offspring_B,N,adj_mat)
         
     #calculate fitness and add offspring to population
-    fitness_A = fitness_qecc(N,offspring_A,t,errors_literal,affected_qubits)
-    fitness_B = fitness_qecc(N,offspring_B,t,errors_literal,affected_qubits)
+    fitness_A = fitness_qecc(N,offspring_A,t,errors_literal,affected_qubits,stab_group, gp_group,stab_group_X, gp_group_X)
+    fitness_B = fitness_qecc(N,offspring_B,t,errors_literal,affected_qubits,stab_group, gp_group,stab_group_X, gp_group_X)
     
     population.append([offspring_A,fitness_A])
     population.append([offspring_B,fitness_B])

@@ -129,12 +129,8 @@ def stabilizer(N,circuit):
     #initializing generators for initial |0>^N state
     for i in range(N):
         stabilizer[i,2*i+1] = 1
-        
-    if len(circuit) == 0:
-        2
-        
-        
-    else:
+
+    if len(circuit) != 0:
         for i in range(len(circuit)): #running through circuit
         
             if circuit[i,0] == 1: #Hadamard
@@ -291,22 +287,149 @@ def stabilizer_bit(stab_lit):
                 
     return M, gp
 
-def stabilizer_group(M,gp):
+def stabilizer_group(N,circuit, stab_group = None, gp_group = None):
     
-    N = len(M)
+
+    #Calculates the initial stabilizer tableau if not provided. The user
+    #may provide the initial tableau if it is going to be evaluated many
+    #times, because the next lines of code, inside the if, does not scale
+    #well with N (it grows as 2**N), therefore avoiding it can save a lot
+    #of time.
+    if str(type(stab_group)) == "<class 'NoneType'>" or str(type(gp_group)) == "<class 'NoneType'>":
+
+        M , gp = stabilizer(N, np.array([[0,0,0],[0,0,0]])) #calculates the tableau for |0>**N
+        
+        
+        stab_group = np.zeros([2**N-1,2*N])
+        gp_group = np.zeros(2**N-1)
+        
+        lst = list(itertools.product([0, 1], repeat=N))[1:]
+        
+            
+        for i in range(len(lst)):
+        
+             R = np.zeros(2*N)
+             R_phase = 0 
+        
+             for j in range(N):
+                if lst[i][j] == 1:
+                    R_phase = np.mod(R_phase+gp[j],4)
+                    for n in range(N):
+                        ans, signal = uf.pauli_mult(M[j,2*n:2*n+2],R[2*n:2*n+2])
+                        R[2*n:2*n+2] = ans
+                        R_phase = np.mod(R_phase+signal,4)
+                        
+             stab_group[i,:] = R
+             gp_group[i] = R_phase
+         
+
+    stab_group_temp = np.copy(stab_group)
+    gp_group_temp = np.copy(gp_group)
     
+    
+    #applying the circuit to the stabilizer group
+    if len(circuit) != 0:
+    
+        for i in range(len(circuit)): #running through circuit
+        
+            if circuit[i,0] == 1: #Hadamard
+            
+                for j in range(2**N-1):
+                    
+                    if  stab_group_temp[j,2*circuit[i,1]] == 1 and stab_group_temp[j,2*circuit[i,1]+1] == 1:
+                        gp_group_temp[j] = np.mod(gp_group_temp[j]+2,4)
+                        
+                    temp_x = stab_group_temp[j,2*circuit[i,1]]
+                    stab_group_temp[j,2*circuit[i,1]] = stab_group_temp[j,2*circuit[i,1]+1]
+                    stab_group_temp[j,2*circuit[i,1]+1] = temp_x
+                    
+            elif circuit[i,0] == 2: #Phase
+                
+                for j in range(2**N-1):
+                    
+                    if  stab_group_temp[j,2*circuit[i,1]] == 1 and stab_group_temp[j,2*circuit[i,1]+1] == 1:
+                        gp_group_temp[j] = np.mod(gp_group_temp[j]+2,4)
+                
+                    stab_group_temp[j,2*circuit[i,1]+1] = np.mod(stab_group_temp[j,2*circuit[i,1]]+stab_group_temp[j,2*circuit[i,1]+1],2)
+            
+            elif circuit[i,0] == 3: #CNOT (left)
+            
+                 for j in range(2**N-1):
+                     
+                    #this if tests if the generator pre-conjugation is Y_1*Y_2 or X_1*Z_2
+                    if (stab_group_temp[j,2*circuit[i,1]] == 1 and stab_group_temp[j,2*circuit[i,1]+1] == 1 and stab_group_temp[j,2*circuit[i,2]] == 1 and stab_group_temp[j,2*circuit[i,2]+1] == 1) or (stab_group_temp[j,2*circuit[i,1]] == 1 and stab_group_temp[j,2*circuit[i,1]+1] == 0 and stab_group_temp[j,2*circuit[i,2]] == 0 and stab_group_temp[j,2*circuit[i,2]+1] == 1):
+                        gp_group_temp[j] = np.mod(gp_group_temp[j]+2,4)
+                        
+            
+                    stab_group_temp[j,2*circuit[i,2]] = np.mod(stab_group_temp[j,2*circuit[i,2]] + stab_group_temp[j,2*circuit[i,1]] ,2)
+                    stab_group_temp[j,2*circuit[i,1]+1] = np.mod(stab_group_temp[j,2*circuit[i,1]+1] + stab_group_temp[j,2*circuit[i,2]+1],2)
+            
+            elif circuit[i,0] == 4: #X
+            
+                for j in range(2**N-1):
+                    
+                     if (stab_group_temp[j,2*circuit[i,1]] == 0 and stab_group_temp[j,2*circuit[i,1]+1] == 1) or (stab_group_temp[j,2*circuit[i,1]] == 1 and stab_group_temp[j,2*circuit[i,1]+1] == 1):
+                        gp_group_temp[j] = np.mod(gp_group_temp[j]+2,4)
+                        
+            elif circuit[i,0] == 5: #Y
+            
+                for j in range(2**N-1):
+                    
+                     if (stab_group_temp[j,2*circuit[i,1]] == 1 and stab_group_temp[j,2*circuit[i,1]+1] == 0) or (stab_group_temp[j,2*circuit[i,1]] == 0 and stab_group_temp[j,2*circuit[i,1]+1] == 1):
+                        gp_group_temp[j] = np.mod(gp_group_temp[j]+2,4)
+                        
+            elif circuit[i,0] == 6: #Z
+            
+                for j in range(2**N-1):
+                    
+                     if (stab_group_temp[j,2*circuit[i,1]] == 1 and stab_group_temp[j,2*circuit[i,1]+1] == 0) or (stab_group_temp[j,2*circuit[i,1]] == 1 and stab_group_temp[j,2*circuit[i,1]+1] == 1):
+                        gp_group_temp[j] = np.mod(gp_group_temp[j]+2,4)
+    
+    #making literal version
+    
+    stab_lit = [['I' for columns in range(N+1)] for rows in range(len(gp_group_temp))]
+        
+    for i in range(len(gp_group_temp)):
+        for j in range(N):
+            if stab_group_temp[i,2*j] == 0 and stab_group_temp[i,2*j+1] == 1:
+                stab_lit[i][j] = 'Z'
+            elif stab_group_temp[i,2*j] == 1 and stab_group_temp[i,2*j+1] == 0:
+                stab_lit[i][j] = 'X'
+            elif stab_group_temp[i,2*j] == 1 and stab_group_temp[i,2*j+1] == 1:
+                stab_lit[i][j] = 'Y'
+                
+        if gp_group_temp[i] == 0:
+            stab_lit[i][-1] = '1'
+        elif gp_group_temp[i] == 1:
+            stab_lit[i][-1] = 'i'
+        elif gp_group_temp[i] == 2:
+            stab_lit[i][-1] = '-1'
+        else:
+            stab_lit[i][-1] = '-i'
+            
+    stab_lit = np.array(stab_lit)
+
+    return stab_group_temp, gp_group_temp, stab_lit
+
+def stabilizer_group_computational(N):
+    
+    #This function calculates the stabilizer grupo for the |0>**N state
+    #The output is use extensively throughout the script and its evaluation
+    #is time consuming, therefore a lot of time is gained by evaluating one
+    #time and reusing it
+    
+    M , gp = stabilizer(N, np.array([[0,0,0],[0,0,0]]))
     stab_group = np.zeros([2**N-1,2*N])
     gp_group = np.zeros(2**N-1)
     
     lst = list(itertools.product([0, 1], repeat=N))[1:]
-    stab_lit = [['I' for columns in range(N+1)] for rows in range(2**N-1)]
-        
+    
     for i in range(len(lst)):
     
-         R = np.zeros(2*N)
-         R_phase = 0 
+          R = np.zeros(2*N)
+          R_phase = 0 
     
-         for j in range(N):
+          for j in range(N):
             if lst[i][j] == 1:
                 R_phase = np.mod(R_phase+gp[j],4)
                 for n in range(N):
@@ -314,30 +437,44 @@ def stabilizer_group(M,gp):
                     R[2*n:2*n+2] = ans
                     R_phase = np.mod(R_phase+signal,4)
                     
-         stab_group[i,:] = R
-         gp_group[i] = R_phase
-        
-         for j in range(N):
-            if stab_group[i,2*j] == 0 and stab_group[i,2*j+1] == 1:
-                stab_lit[i][j] = 'Z'
-            elif stab_group[i,2*j] == 1 and stab_group[i,2*j+1] == 0:
-                stab_lit[i][j] = 'X'
-            elif stab_group[i,2*j] == 1 and stab_group[i,2*j+1] == 1:
-                stab_lit[i][j] = 'Y'
-                
-            if gp_group[i] == 0:
-                stab_lit[i][-1] = '1'
-            elif gp_group[i] == 1:
-                stab_lit[i][-1] = 'i'
-            elif gp_group[i] == 2:
-                stab_lit[i][-1] = '-1'
-            else:
-                stab_lit[i][-1] = '-i'
-        
-            
-    stab_lit = np.array(stab_lit)
+          stab_group[i,:] = R
+          gp_group[i] = R_phase
+          
+    return stab_group, gp_group
+
+def stabilizer_group_X(N):
     
-    return stab_group, gp_group, stab_lit
+    circuit_temp = np.zeros([N,3])
+    
+    for i in range(N):
+        
+        circuit_temp[i,:] = np.array([1,i,0])
+        
+    circuit_temp = circuit_temp.astype(int)
+    
+    M , gp = stabilizer(N, circuit_temp)
+    stab_group_X = np.zeros([2**N-1,2*N])
+    gp_group_X = np.zeros(2**N-1)
+    
+    lst = list(itertools.product([0, 1], repeat=N))[1:]
+    
+    for i in range(len(lst)):
+    
+          R = np.zeros(2*N)
+          R_phase = 0 
+    
+          for j in range(N):
+            if lst[i][j] == 1:
+                R_phase = np.mod(R_phase+gp[j],4)
+                for n in range(N):
+                    ans, signal = uf.pauli_mult(M[j,2*n:2*n+2],R[2*n:2*n+2])
+                    R[2*n:2*n+2] = ans
+                    R_phase = np.mod(R_phase+signal,4)
+                    
+          stab_group_X[i,:] = R
+          gp_group_X[i] = R_phase
+          
+    return stab_group_X, gp_group_X
 
 def stabilizer_canonical(stabilizer,global_phase):
     
@@ -680,7 +817,7 @@ def check_orthogonality(circ_1,circ_2,N):
     """
     
     M_1, gp_1 = stabilizer(N,circ_1)
-    stab_group_1, gp_group_1, stab_lit_1 = stabilizer_group(M_1, gp_1)
+    stab_group_1, gp_group_1, stab_lit_1 = stabilizer_group(N,circ_1)
     
     stab_group_1_list = [tuple(stab_lit_1[x,:N]) for x in range(len(stab_lit_1))]
     
@@ -748,76 +885,83 @@ def inner_product(circ_1,circ_2,N):
 
     return inner_product
 
-def perpendicular_circuits(N,circ):
-
-    M, gp = stabilizer(N,circ[-1])
-    M_c, gp_c = stabilizer_canonical(M, gp)
-    M_l = stabilizer_literal(M_c, gp_c)
+def orthogonal_states(N,circuit, global_phase_initial = None):
     
-    perp_operators = []
+    #Since the tableau for all states is the same, only the
+    #global phases change (and are all combinations of "+1" and "-1"),
+    #it suffices to calculate 
     
+    if str(type(global_phase_initial)) == "<class 'NoneType'>":
+        
+        #each element is a different combination of "+1" and "-1" global phase
+        global_phase_initial = np.array(list(itertools.product([0, 2], repeat=N))[1:])
+        
+    stabilizer = np.zeros([N,2*N]) #each element share the same tableau
     for i in range(N):
+        stabilizer[i,2*i+1] = 1
         
-        perp_operators.append([])
+    #each line of global_phase is the final global phase of each orthogonal state
+    global_phase = np.copy(global_phase_initial)
     
-    perp_circuits  = []
-    
-    for i in range(2**N-1):
+    if len(circuit) != 0:
         
-        perp_circuits.append([])
-    
-    i = 0
-    for j in range(N):
-        if M_l[i,j] == 'X': #it's a column of the X/Y block
-            if len(uf.find_literal('Y',M_l[:,j])) != 0:
-                perp_operators[j] = [5,j,0]
-            else:
-                perp_operators[j] = [6,j,0]
-            i += 1
-
-        elif M_l[i,j] == 'Y': #it's a column of the X/Y block
-            if len(uf.find_literal('X',M_l[:,j])) != 0:
-                perp_operators[j] = [4,j,0]
-            else:
-                perp_operators[j] = [6,j,0]
-            i += 1
-        else:
-            perp_operators[j] = [4,j,0]
-    
-    
-    lst = list(itertools.product([0, 1], repeat=N))[1:]
-    
-    
-    
-    for i in range(len(lst)):
+        for i in range(len(circuit)): #running through circuit
         
-        perp_circuit = copy.deepcopy( circ )
-        for j in range(N):
-            if lst[i][j] == 1:
-                
-                perp_circuit[perp_operators[j][0]+1].append(perp_operators[j])
-                   
-        k = 0
-                
-        stop = False
-        
-        while stop == False:
-            if len(perp_circuit[k]) != 0:
-                stop = True
-            else:
-                k += 1
-    
-        circuit_array = np.array( perp_circuit[k] )
-        for j in range(k+1,8):
-                if len(perp_circuit[j]) != 0:
-                    circuit_array = np.vstack([circuit_array, np.array(perp_circuit[j])])
+            if circuit[i,0] == 1: #Hadamard
             
-        perp_circuit[-1] = circuit_array
+                for j in range(N):
+                    
+                    if  stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 1:
+                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
+                        
+                    temp_x = stabilizer[j,2*circuit[i,1]]
+                    stabilizer[j,2*circuit[i,1]] = stabilizer[j,2*circuit[i,1]+1]
+                    stabilizer[j,2*circuit[i,1]+1] = temp_x
+                    
+            elif circuit[i,0] == 2: #Phase
+                
+                for j in range(N):
+                    
+                    if  stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 1:
+                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
+                
+                    stabilizer[j,2*circuit[i,1]+1] = np.mod(stabilizer[j,2*circuit[i,1]]+stabilizer[j,2*circuit[i,1]+1],2)
+            
+            elif circuit[i,0] == 3: #CNOT (left)
+            
+                 for j in range(N):
+                     
+                    #this if tests if the generator pre-conjugation is Y_1*Y_2 or X_1*Z_2
+                    if (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 1 and stabilizer[j,2*circuit[i,2]] == 1 and stabilizer[j,2*circuit[i,2]+1] == 1) or (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 0 and stabilizer[j,2*circuit[i,2]] == 0 and stabilizer[j,2*circuit[i,2]+1] == 1):
+                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
+                        
         
-        perp_circuits[i] = perp_circuit
-    
+                    stabilizer[j,2*circuit[i,2]] = np.mod(stabilizer[j,2*circuit[i,2]] + stabilizer[j,2*circuit[i,1]] ,2)
+                    stabilizer[j,2*circuit[i,1]+1] = np.mod(stabilizer[j,2*circuit[i,1]+1] + stabilizer[j,2*circuit[i,2]+1],2)
+            
+            elif circuit[i,0] == 4: #X
+            
+                for j in range(N):
+                    
+                     if (stabilizer[j,2*circuit[i,1]] == 0 and stabilizer[j,2*circuit[i,1]+1] == 1) or (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 1):
+                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
+                        
+            elif circuit[i,0] == 5: #Y
+            
+                for j in range(N):
+                    
+                     if (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 0) or (stabilizer[j,2*circuit[i,1]] == 0 and stabilizer[j,2*circuit[i,1]+1] == 1):
+                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
+                        
+            elif circuit[i,0] == 6: #Z
+            
+                for j in range(N):
+                    
+                     if (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 0) or (stabilizer[j,2*circuit[i,1]] == 1 and stabilizer[j,2*circuit[i,1]+1] == 1):
+                        global_phase[:,j] = np.mod(global_phase[:,j]+2,4)
 
-    return perp_circuits
+    return stabilizer, global_phase
+
 
 def circuit_reverser(C,M_c_l):
     
