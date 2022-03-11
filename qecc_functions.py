@@ -4,66 +4,8 @@ import numpy as np
 import utility_functions as uf
 import itertools
 
+def syndrome_table(N,P,errors_literal,affected_qubits):
 
-### LIST OF FUNTIONS ###
-# syndrome_table(N,P) = s_table
-# syndrome_operators(N,codewords) = P, P_bit
-# logical_X(N,codewords) = logical_X_table
-# phase_distance(N,codewords) = phase_distance
-# flip_distance(N,codewords) = distance
-# code_distance(N,codewords) = c_distance
-# code_classification(N,codewords) = c_classification
-# errors_list(N,t) = errors_literal, affected_qubits
-# correctability_degree(N,codewords) = degree, undetectable_faults, undecidable_faults
-
-def syndrome_table(N,P):
-    
-    s_table = []
-    
-    for i in range(3*N):
-        
-        s_table.append([])
-    
-    for i in range(N):
-        
-        X_error = ['I']*N
-        Z_error = ['I']*N
-        Y_error = ['I']*N
-        
-        X_error[i] = 'X'
-        Z_error[i] = 'Z'
-        Y_error[i] = 'Y'
-        
-        X_syndrome = ''
-        Z_syndrome = ''
-        Y_syndrome = ''
-        
-        for j in range(len(P)):
-            
-            if uf.pauli_commutation(X_error,P[j]) == -1:
-                X_syndrome += '1'
-            else:
-                X_syndrome += '0'
-                
-            if uf.pauli_commutation(Z_error,P[j]) == -1:
-                Z_syndrome += '1'
-            else:
-                Z_syndrome += '0'
-                
-            if uf.pauli_commutation(Y_error,P[j]) == -1:
-                Y_syndrome += '1'
-            else:
-                Y_syndrome += '0'
-                
-        s_table[2*i] = [X_error,i,X_syndrome]
-        s_table[2*i+1] = [Z_error,i,Z_syndrome]
-        s_table[3*i+2] = ['Y',i,Y_syndrome]
-        
-    return s_table
-
-def syndrome_table_t_errors(N,P,errors_literal,affected_qubits):
-    
-    
     s_table = []
 
     for i in range(len(errors_literal)):
@@ -455,8 +397,7 @@ def css_degree(P,N):
 def phase_distance(N,codewords,stab_set):
     
     #evaluating phase distance
-    
-        
+  
     common_stabilizers = stab_set[0]
     dif_stabilizers = stab_set[0]
     
@@ -527,7 +468,7 @@ def correctability_degree(N,t,errors_literal,affected_qubits,stab_set):
     P, P_bit = syndrome_operators(N,stab_set)
     common_stab = common_stabilizers(N,stab_set)
     
-    s_table = syndrome_table_t_errors(N,P,errors_literal,affected_qubits)
+    s_table = syndrome_table(N,P,errors_literal,affected_qubits)
     
     P_set = set()
     for i in range(len(P)):
