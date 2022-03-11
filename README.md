@@ -20,9 +20,9 @@ Summary
 =================
 <!--ts-->
    * [About](#About)
-   * [How-to use it](#how_to)
    * [Requirements](#requirements)
-   * [Functions' list](#func_list)
+   * [How-to use it](#how_to)
+   * [List of functions](#func_list)
       * [stabilizer_functions.py](#stab_func)
       * [evolution_functions.py](#evo_func)
       * [qecc_functions.py](#rqecc_func)
