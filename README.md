@@ -7,7 +7,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <img src="https://i.imgur.com/jayntLl.jpg" alt="Logo">
+  <img src="https://i.imgur.com/uCyUURi.png" alt="Logo">
   
 
   <p align="center">
