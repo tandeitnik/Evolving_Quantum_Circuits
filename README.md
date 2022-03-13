@@ -64,8 +64,16 @@ This readme brings a brief starter guide of utilizing the scripts contained in t
 According to my classification, all functions are sorted into four different scripts for better organization. The following sub-sections are a comprehensive list of the functions with a brief description of their functionalities.
 
 
-### Stabilizer functions
+## Stabilizer functions
 
+<!--ts-->
+   * [randcirc](#randcirc)
+   * [gene_express](#gene-express)  
+   * [final_state](#final-state)  
+<!--te-->
+
+<hr>
+### randcirc
 ```python
 randcirc(N,T,adj_mat)
 ```
@@ -75,6 +83,7 @@ randcirc(N,T,adj_mat)
 
 **Description:** This function generates a random Clifford circuit over `N` qubits. CNOT gates satisfies the neighbour structure imposed by the adjacency matrix `adj_mat`. In `T` loops, a random Clifford gate (I, H, P, CNOT) is selected for each qubit in the crescent order of indexes, thus the final circuit has NT gates.
 <hr>
+### gene_express
 ```python
 gene_express(N,circ)
 ```
@@ -84,6 +93,7 @@ gene_express(N,circ)
 
 **Description:** This function translates a Clifford circuit array into its qiskit equivalent `QuantumCircuit` object.
 <hr>
+### final_state
 ```python
 final_state(N,circ)
 ```
@@ -94,11 +104,11 @@ final_state(N,circ)
 **Description:** This function returns the output state of the computation of the Clifford circuit `circ` to the initial state $\vert 0 \rangle^{\otimes N}$.
 <hr>
 
-### Evolution functions
+## Evolution functions
 
-### QECC functions
+## QECC functions
 
-### Utility functions
+## Utility functions
 
 ## Author
 
