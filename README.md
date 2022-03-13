@@ -11,7 +11,7 @@
   
 
   <p align="center">
-    <b>Application of genetic algorithm to quantum computing.<\b>
+    <b>Application of genetic algorithm to quantum computing.</b>
     <br />
   </p>
 </div>
