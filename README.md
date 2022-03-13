@@ -50,7 +50,7 @@ Summary
  <img style="border-radius: 50%;" src="https://i.imgur.com/rGsWaNH.jpg" width="100px;" alt=""/>
  <br />
  
-**Daniel Ribas Tandeitnik**
+**Daniel Ribas Tandeitnik**<br />
 *Physicist and production engineer.* 
 
 Feel free to get in touch with me.
