@@ -1,4 +1,4 @@
-# 🧬  Evolving Quantum Circuits 🧬 
+#   Evolving Quantum Circuits
 
  <h4 align="center"> 
 	🚧  READ ME UNDER CONSTRUCTION  🚧
@@ -11,7 +11,7 @@
   
 
   <p align="center">
-    <b>Application of genetic algorithm to quantum computing.</b>
+    🧬<b>Application of genetic algorithm to quantum computing.</b>🧬
     <br />
   </p>
 </div>
