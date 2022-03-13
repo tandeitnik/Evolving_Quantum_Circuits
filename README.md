@@ -47,7 +47,7 @@ Summary
 
 ## Author
 
- <img style="border-radius: 50%;" src="https://i.imgur.com/rGsWaNH.jpg" width="100px;" alt=""/>
+ <img style="border-radius: 50%;" src="https://i.imgur.com/KuuiVV2.png" width="150px;" alt=""/>
 
 **Daniel Ribas Tandeitnik**<br />
 *Physicist and production engineer.* 
