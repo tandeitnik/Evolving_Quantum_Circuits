@@ -68,8 +68,8 @@ According to my classification, all functions are sorted into four different scr
 
 <!--ts-->
    * [randcirc](#randcirc)
-   * [gene_express](#gene-express)  
-   * [final_state](#final-state)  
+   * [gene_express](#gene_express)  
+   * [final_state](#final_state)  
 <!--te-->
 
 <hr>
@@ -109,7 +109,7 @@ final_state(N,circ)
 
 **Output:** a) `out_state` , qiskit result state vector.
 
-**Description:** This function returns the output state of the computation of the Clifford circuit `circ` to the initial state $\vert 0 \rangle^{\otimes N}$.
+**Description:** This function returns the output state of the computation of the Clifford circuit `circ` to the initial state <img src="https://render.githubusercontent.com/render/math?math=e^{i \pi} = -1"> $\vert 0 \rangle^{\otimes N}$.
 
 <hr>
 
