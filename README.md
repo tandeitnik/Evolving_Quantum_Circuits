@@ -109,7 +109,7 @@ final_state(N,circ)
 
 **Output:** a) `out_state` , qiskit result state vector.
 
-**Description:** This function returns the output state of the computation of the Clifford circuit `circ` to the initial state <img src="https://render.githubusercontent.com/render/math?math=e^{i \pi} = -1"> $\vert 0 \rangle^{\otimes N}$.
+**Description:** This function returns the output state of the computation of the Clifford circuit `circ` to the initial state ![equation](https://latex.codecogs.com/svg.image?%5Cvert%200%20%5Crangle%5E%7B%5Cotimes%20N%7D).
 
 <hr>
 
