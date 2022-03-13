@@ -1,4 +1,4 @@
-# Evolving Quantum Circuits
+# 🧬  Evolving Quantum Circuits 🧬 
 
  <h4 align="center"> 
 	🚧  READ ME UNDER CONSTRUCTION  🚧
