@@ -109,7 +109,7 @@ final_state(N,circ)
 
 **Output:** a) `out_state` , qiskit result state vector.
 
-**Description:** This function returns the output state of the computation of the Clifford circuit `circ` to the initial state ![equation](https://latex.codecogs.com/svg.image?%5Cbg_white%20%5Cvert0%5Crangle%5E%7B%5Cotimes%20N%7D).
+**Description:** This function returns the output state of the computation of the Clifford circuit `circ` to the initial state ![equation](https://latex.codecogs.com/svg.image?%5Cinline%20%5Cbg%7Bwhite%7D%5Cvert0%5Crangle%5E%7B%5Cotimes%20N%7D).
 
 <hr>
 
