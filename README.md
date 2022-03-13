@@ -73,7 +73,9 @@ According to my classification, all functions are sorted into four different scr
 <!--te-->
 
 <hr>
+
 ### randcirc
+
 ```python
 randcirc(N,T,adj_mat)
 ```
@@ -82,8 +84,11 @@ randcirc(N,T,adj_mat)
 **Output:** a) `circuit` , a random Clifford circuit array.
 
 **Description:** This function generates a random Clifford circuit over `N` qubits. CNOT gates satisfies the neighbour structure imposed by the adjacency matrix `adj_mat`. In `T` loops, a random Clifford gate (I, H, P, CNOT) is selected for each qubit in the crescent order of indexes, thus the final circuit has NT gates.
+
 <hr>
+
 ### gene_express
+
 ```python
 gene_express(N,circ)
 ```
@@ -92,8 +97,11 @@ gene_express(N,circ)
 **Output:** a) `circuit` , qiskit `QuantumCircuit` object.
 
 **Description:** This function translates a Clifford circuit array into its qiskit equivalent `QuantumCircuit` object.
+
 <hr>
+
 ### final_state
+
 ```python
 final_state(N,circ)
 ```
@@ -102,6 +110,7 @@ final_state(N,circ)
 **Output:** a) `out_state` , qiskit result state vector.
 
 **Description:** This function returns the output state of the computation of the Clifford circuit `circ` to the initial state $\vert 0 \rangle^{\otimes N}$.
+
 <hr>
 
 ## Evolution functions
