@@ -50,7 +50,10 @@ Summary
  <img style="border-radius: 50%;" src="https://i.imgur.com/rGsWaNH.jpg" width="100px;" alt=""/>
  <br />
  
-**Daniel Tandeitnik**
+**Daniel Ribas Tandeitnik**
+*Physicist and production engineer.* 
+
+Feel free to get in touch with me.
 
 
 [![Linkedin Badge](https://img.shields.io/badge/-Daniel_Tandeitnik-blue?style=flat-square&logo=Linkedin&logoColor=white&link=https://www.linkedin.com/in/tandeitnik/)](https://www.linkedin.com/in/tandeitnik/) [![Gmail Badge](https://img.shields.io/badge/-tandeitnik@gmail.com-c14438?style=flat-square&logo=Gmail&logoColor=white&link=mailto:tandeitnik@gmail.com)](mailto:tandeitnik@gmail.com)
