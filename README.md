@@ -52,6 +52,7 @@ This readme brings a brief starter guide of utilizing the scripts contained in t
  - [x] qiskit
  - [x] itertools
  - [x] networkx
+ - [x] basic knowledge of quantum computation, stabilizer formalism and quantum error correction codes
 
 *This code is Python 2 compatible.*
 
