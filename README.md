@@ -66,6 +66,11 @@ According to my classification, all functions are sorted into four different scr
 
 ### Stabilizer functions
 
+```python
+randcirc(N,T,adj_mat)
+```
+
+
 ### Evolution functions
 
 ### QECC functions
