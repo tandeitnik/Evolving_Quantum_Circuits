@@ -19,25 +19,38 @@
 Summary
 =================
 <!--ts-->
-   * [About](#About)
+   * [About](#about)
    * [Requirements](#requirements)
-   * [How-to use it](#how_to)
-   * [List of functions](#func_list)
-      * [stabilizer_functions.py](#stab_func)
-      * [evolution_functions.py](#evo_func)
-      * [qecc_functions.py](#rqecc_func)
-      * [utility_functions.py](#ut_func)
+   * [How-to use it](#how-to-use-it)
+   * [List of functions](#list-of-functions)
+      * [Stabilizer functions](#stabilizer-functions)
+      * [Evolution functions](#evolution-functions)
+      * [QECC functions](#qecc-functions)
+      * [Utility functions](#utility-functions)
    * [Author](#author)
 
 <!--te-->
 
-### Author
----
+## Requirements
+
+## How-to use it
+
+## List of functions
+
+### Stabilizer functions
+
+### Evolution functions
+
+### QECC functions
+
+### Utility functions
+
+## Author
 
  <img style="border-radius: 50%;" src="https://i.imgur.com/rGsWaNH.jpg" width="100px;" alt=""/>
  <br />
- <sub><b>Daniel Tandeitnik</b></sub></a>
+ 
+**Daniel Tandeitnik**
 
 
 [![Linkedin Badge](https://img.shields.io/badge/-Daniel_Tandeitnik-blue?style=flat-square&logo=Linkedin&logoColor=white&link=https://www.linkedin.com/in/tandeitnik/)](https://www.linkedin.com/in/tandeitnik/) [![Gmail Badge](https://img.shields.io/badge/-tandeitnik@gmail.com-c14438?style=flat-square&logo=Gmail&logoColor=white&link=mailto:tandeitnik@gmail.com)](mailto:tandeitnik@gmail.com)
-
