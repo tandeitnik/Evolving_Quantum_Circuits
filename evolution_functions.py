@@ -368,22 +368,12 @@ def mutation(circ,N,adj_mat):
 
 def crossover(population,selected_idx):
 
-    min_len = min(len(population[selected_idx[0]][0]),len(population[selected_idx[1]][0]))
+    cut_point_A = np.random.randint(0,len(population[selected_idx[0]][0]))
+    cut_point_B = np.random.randint(0,len(population[selected_idx[1]][0]))
     
-    cut_point = np.random.randint(0,min_len)
-    
-    
-    offspring_A = np.zeros([len(population[selected_idx[1]][0]),3])
-    offspring_B = np.zeros([len(population[selected_idx[0]][0]),3])
-    
-    offspring_A[:cut_point,:] = population[selected_idx[0]][0][:cut_point,:]
-    offspring_A[cut_point:,:] = population[selected_idx[1]][0][cut_point:,:]
-    
-    offspring_B[:cut_point,:] = population[selected_idx[1]][0][:cut_point,:]
-    offspring_B[cut_point:,:] = population[selected_idx[0]][0][cut_point:,:]
-    
-    offspring_A = offspring_A.astype(int)
-    offspring_B = offspring_B.astype(int)
+    offspring_A = np.vstack([ population[selected_idx[0]][0][:cut_point_A,:]  , population[selected_idx[1]][0][cut_point_B:,:]  ])
+    offspring_B = np.vstack([ population[selected_idx[1]][0][:cut_point_B,:]  , population[selected_idx[0]][0][cut_point_A:,:]  ])
+                 
     
     return offspring_A, offspring_B
 
