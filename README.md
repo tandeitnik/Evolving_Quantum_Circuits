@@ -63,11 +63,12 @@ This is a brief tutorial on using the scripts of this repository to run an evolu
 <div align="center">
   <img src="https://i.imgur.com/hiBNB18.png" width="500px">
   <p align="center">
-    🧬 <i>Decision tree of the genetic algorithm. The halt decision gate evaluates if a termination condition was met.</i> 🧬
+    🧬 <i>Decision tree of the genetic algorithm.</i> 🧬
     <br />
   </p>
 </div>
 
+Script-wise, the `main.py` script coordinates all the steps while the four auxiliary scripts (terminating with "`_functions.py`") contain the proper functions employed in each step. 
 
 
 
