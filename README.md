@@ -61,7 +61,7 @@ This readme brings a brief starter guide of utilizing the scripts contained in t
 This is a brief tutorial on using the scripts of this repository to run an evolutionary search for QECCs. The algorithm observes the following flux:
 <br />
 <div align="center">
-  <img src="https://i.imgur.com/hiBNB18.png" width="150px">
+  <img src="https://i.imgur.com/hiBNB18.png" width="500px">
   <p align="center">
     🧬 <i>Decision tree of the genetic algorithm. The halt decision gate evaluates if a termination condition was met.</i> 🧬
     <br />
