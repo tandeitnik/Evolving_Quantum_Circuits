@@ -22,7 +22,7 @@ Summary
    * [About](#about)
    * [Publications](#publications)
    * [Requirements](#requirements)
-   * [How-to use it](#how-to-use-it)
+   * [Tutorial](#tutorial)
    * [List of functions](#list-of-functions)
       * [Stabilizer functions](#stabilizer-functions)
       * [Evolution functions](#evolution-functions)
@@ -56,7 +56,18 @@ This readme brings a brief starter guide of utilizing the scripts contained in t
 
 *This code is Python 2 compatible.*
 
-## How-to use it
+## Tutorial
+
+This is a brief tutorial on using the scripts of this repository to run an evolutionary search for QECCs. The algorithm observes the following flux:
+<br />
+<div align="center">
+  <img src="https://i.imgur.com/hiBNB18.png" alt="decisiton_tree">
+  <p align="center">
+    🧬 <i>Decision tree of the genetic algorithm. The halt decision gate evaluates if a termination condition was met.</i> 🧬
+    <br />
+  </p>
+</div>
+
 
 
 
