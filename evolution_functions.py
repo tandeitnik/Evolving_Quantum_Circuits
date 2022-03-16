@@ -293,6 +293,11 @@ def fitness_qecc(N,circuit,t,errors_literal,affected_qubits,stab_group,gp_group,
             
     return(max(fitness))
 
+def fitness_toy(N,circ):
+    D = sf.depth(N,circ)
+    mu = sf.mean_entropy(N,circ)
+    fitness = float(mu)/D
+    return fitness
 
 ####################################
 ## CROSSOVER & MUTATION FUNCTIONS ##
