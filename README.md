@@ -68,13 +68,26 @@ This is a brief tutorial on using the scripts of this repository to run an evolu
   </p>
 </div>
 
-Script-wise, the `main.py` script coordinates all the steps while the four auxiliary scripts (terminating with "`_functions.py`") contain the proper functions employed in each step. 
+Script-wise, the `main.py` script coordinates all the steps while the four auxiliary scripts (terminating with "`_functions.py`") contain the proper functions employed in each step. Thus, we focus here on how to use the `main.py` script.
 
 
+There are eleven parameters to be set at the beginning:
+
+1. `M` - initial population size
+2. `N` - number of qubits
+3. `T` - N*T gates will be draw for random individuals
+4. `adj_mat` - adjacency matrix of the lattice of qubits
+5. `mutation_density` - probability density of times mutations are applied
+6. `progenitors` - number of progenitors to breed
+7. `death_rate` - percentage of population that is replaced by a new random set of individuals
+8. `population_surplus` - when the size of population is M*population_surplus, it is reduced to M(1-death_rate) (keeping the best individuals) and M*death_rate are added
+9. `acq_time` -  at multiples of `acq_time` data is recorded and the mutation/crossover rates are updated
+10. `max_generations` - maximum number of generations
+11. `max_fitness_target` - if the a circuit have fitness equal to `max_fitness_target` the simulation ends
 
 ## List of functions
 
-According to my classification, all functions are sorted into four different scripts for better organization. The following sub-sections are a comprehensive list of the functions with a brief description of their functionalities.
+According to my classification, all functions are sorted into four different scripts for better organization. The following sub-sections are a comprehensive list of the functions with a brief description of their functionalities. 
 
 
 ## Stabilizer functions
