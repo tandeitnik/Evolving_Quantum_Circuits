@@ -296,7 +296,7 @@ def fitness_qecc(N,circuit,t,errors_literal,affected_qubits,stab_group,gp_group,
 def fitness_toy(N,circ):
     D = sf.depth(N,circ)
     mu = sf.mean_entropy(N,circ)
-    fitness = float(mu)/D
+    fitness = float(mu)+(1/D)
     return fitness
 
 ####################################
@@ -366,8 +366,14 @@ def mutation(circ,N,adj_mat):
             qubit_A = np.random.randint(0,N)
             
             new_circ[insertion_location,:] = np.array([gate,qubit_A,0])
-        
-        
+    
+    
+    #if the fitness function can spawn zero fitness-valued individuals, the above code may fail, i.e.,
+    #it generates an empty selected_idx list. If this happens, random individuals are sampled from the
+    #population.
+    if len(selected_idx) == 0:
+
+        selected_idx = random.sample(range(len(population)),n_ind)                
         
     return new_circ.astype(int)
 
