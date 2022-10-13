@@ -30,7 +30,7 @@ This repository stores the scripts made to explore genetic algorithms (GA) as a 
 
 
 Tandeitnik, D., & Guerreiro, T. (2022). Evolving Quantum Circuits. arXiv. https://doi.org/10.48550/arXiv.2210.05058
-
+Tandeitnik, D. R. (2022). Evolving Quantum Error Correction Codes (Master dissertation, PUC-Rio). https://www.maxwell.vrac.puc-rio.br/59800/59800.PDF
 
 ## Author
 
