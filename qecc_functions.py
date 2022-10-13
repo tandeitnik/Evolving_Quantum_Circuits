@@ -464,7 +464,6 @@ def errors_list(N,t):
 
 def correctability_degree(N,t,errors_literal,affected_qubits,stab_set):
     
-    #P, P_bit,topo_degree,css_group_degree, css_degre = syndrome_operators_topo(N,stab_set)
     P, P_bit = syndrome_operators(N,stab_set)
     common_stab = common_stabilizers(N,stab_set)
     
@@ -519,5 +518,62 @@ def correctability_degree(N,t,errors_literal,affected_qubits,stab_set):
 
     c_degree = float(len(s_table) + len(code_list) - undetectable_faults - undecidable_faults)/float(len(s_table) + len(code_list))
         
-    #return c_degree, topo_degree, css_group_degree, css_degre
     return c_degree
+    
+def correctability_degree_color(N,t,errors_literal,affected_qubits,stab_set):
+    
+    P, P_bit,topo_degree,css_group_degree, css_degre = syndrome_operators_topo(N,stab_set)
+    common_stab = common_stabilizers(N,stab_set)
+    
+    s_table = syndrome_table(N,P,errors_literal,affected_qubits)
+    
+    P_set = set()
+    for i in range(len(P)):
+        P_set.add(tuple(P[i]))
+
+    
+    
+    code_set = set()
+        
+    for i in range(len(s_table)):
+        code_set.add(s_table[i][2])
+            
+    code_list = list(code_set)
+    
+    undetectable_faults = 0
+    undecidable_faults = 0
+    
+    #counting lines that make the error undetectable
+    for i in range(len(s_table)):
+        
+        if s_table[i][2] == '0'*len(P):
+            
+            undetectable_faults += 1
+        
+    #counting the syndromes that make the correction undecidable
+    errors_per_code = []
+    
+    for i in range(len(code_list)):
+        
+        errors_per_code.append([])
+    
+    for i in range(len(code_list)):
+        errors_per_code[i] = [code_list[i] , [s_table[x][0] for x in range(len(s_table)) if s_table[x][2] == code_list[i] ]]
+    
+    for i in range(len(errors_per_code)):
+        
+        if len(errors_per_code[i][1]) != 1 and errors_per_code[i][0] != '0'*len(P):
+        
+            errors = list(itertools.combinations(list(range(len(errors_per_code[i][1]))), 2))
+            
+            for j in range(len(errors)):
+                
+                ans,signal = uf.pauli_multi_list(errors_per_code[i][1][errors[j][0]],errors_per_code[i][1][errors[j][1]])
+                
+                if (ans in common_stab) == False:
+                    undecidable_faults += 1
+                    break
+
+    c_degree = float(len(s_table) + len(code_list) - undetectable_faults - undecidable_faults)/float(len(s_table) + len(code_list))
+        
+    return c_degree, topo_degree, css_group_degree, css_degre
