@@ -10,288 +10,206 @@ import random
 ## FITNESS FUNCTIONS ##
 #######################
 
-def fitness_qecc(N,circuit,t,errors_literal,affected_qubits,stab_group,gp_group,stab_group_X, gp_group_X):
 
-    #primeiro eu gero o grupo do circuito, vou precisar desse grupo para calcular
-    #o phase flip
-    stab_group_circuit, gp_group_circuit, stab_lit_circuit = sf.stabilizer_group(N,circuit,stab_group, gp_group)
-
-    #calculo do menor número de literais num stabilizer - faço esse calculo para
-    #ter um low bound nos literais 
-    literals = np.zeros(2**N-1)
-
-    for k in range(2**N-1):
+def weight(string):
+    
+    w = 0
+    
+    for i in range(len(string)):
         
-        literals[k] = N - len(uf.find_literal('I',stab_lit_circuit[k,:]))
-        if literals[k] == 1:
-            min_lit = 1
-            break
+        if string[i] != 'I':
             
-    if k == 2**N-2:
-        min_lit = min(literals)
-        
-    #agora vou descobrir os operadores de bit-flip.
+            w += 1
+            
+    return w
 
-    stab_group_temp_X = np.copy(stab_group_X)
-    gp_group_temp_X = np.copy(gp_group_X)
-
-    ###################################################
-    #applying the circuit to the logical operators  X##
-    ###################################################
-
-    if len(circuit) != 0:
-
-        for i in range(len(circuit)): #running through circuit
-        
-            if circuit[i,0] == 1: #Hadamard
-            
-                for j in range(2**N-1):
-                    
-                    if  stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1:
-                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
-                        
-                    temp_x = stab_group_temp_X[j,2*circuit[i,1]]
-                    stab_group_temp_X[j,2*circuit[i,1]] = stab_group_temp_X[j,2*circuit[i,1]+1]
-                    stab_group_temp_X[j,2*circuit[i,1]+1] = temp_x
-                    
-            elif circuit[i,0] == 2: #Phase
-                
-                for j in range(2**N-1):
-                    
-                    if  stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1:
-                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
-                
-                    stab_group_temp_X[j,2*circuit[i,1]+1] = np.mod(stab_group_temp_X[j,2*circuit[i,1]]+stab_group_temp_X[j,2*circuit[i,1]+1],2)
-            
-            elif circuit[i,0] == 3: #CNOT (left)
-            
-                 for j in range(2**N-1):
-                     
-                    #this if tests if the generator pre-conjugation is Y_1*Y_2 or X_1*Z_2
-                    if (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1 and stab_group_temp_X[j,2*circuit[i,2]] == 1 and stab_group_temp_X[j,2*circuit[i,2]+1] == 1) or (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 0 and stab_group_temp_X[j,2*circuit[i,2]] == 0 and stab_group_temp_X[j,2*circuit[i,2]+1] == 1):
-                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
-                        
-            
-                    stab_group_temp_X[j,2*circuit[i,2]] = np.mod(stab_group_temp_X[j,2*circuit[i,2]] + stab_group_temp_X[j,2*circuit[i,1]] ,2)
-                    stab_group_temp_X[j,2*circuit[i,1]+1] = np.mod(stab_group_temp_X[j,2*circuit[i,1]+1] + stab_group_temp_X[j,2*circuit[i,2]+1],2)
-            
-            elif circuit[i,0] == 4: #X
-            
-                for j in range(2**N-1):
-                    
-                     if (stab_group_temp_X[j,2*circuit[i,1]] == 0 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1) or (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1):
-                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
-                        
-            elif circuit[i,0] == 5: #Y
-            
-                for j in range(2**N-1):
-                    
-                     if (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 0) or (stab_group_temp_X[j,2*circuit[i,1]] == 0 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1):
-                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
-                        
-            elif circuit[i,0] == 6: #Z
-            
-                for j in range(2**N-1):
-                    
-                     if (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 0) or (stab_group_temp_X[j,2*circuit[i,1]] == 1 and stab_group_temp_X[j,2*circuit[i,1]+1] == 1):
-                        gp_group_temp_X[j] = np.mod(gp_group_temp_X[j]+2,4)
-
-    stab_lit_comp = [['I' for columns in range(N+1)] for rows in range(len(gp_group_temp_X))]
-        
-    for i in range(len(gp_group_temp_X)):
-        for j in range(N):
-            if stab_group_temp_X[i,2*j] == 0 and stab_group_temp_X[i,2*j+1] == 1:
-                stab_lit_comp[i][j] = 'Z'
-            elif stab_group_temp_X[i,2*j] == 1 and stab_group_temp_X[i,2*j+1] == 0:
-                stab_lit_comp[i][j] = 'X'
-            elif stab_group_temp_X[i,2*j] == 1 and stab_group_temp_X[i,2*j+1] == 1:
-                stab_lit_comp[i][j] = 'Y'
-                
-        if gp_group_temp_X[i] == 0:
-            stab_lit_comp[i][-1] = '1'
-        elif gp_group_temp_X[i] == 1:
-            stab_lit_comp[i][-1] = 'i'
-        elif gp_group_temp_X[i] == 2:
-            stab_lit_comp[i][-1] = '-1'
-        else:
-            stab_lit_comp[i][-1] = '-i'
-            
-    stab_lit_comp = np.array(stab_lit_comp)
-
-    #o bit flip distance é calculado
-    bit_flip_distance = np.array([N - len(uf.find_literal('I',stab_lit_comp[i,:])) for i in range(len(stab_lit_comp))])
-
-    #Agora vem o calculo do phase-flip. A ideia é a seguinte: eu sei que os 
-    #operadores de phase-flip são os stabilizers com a fase trocada. Eu tenho
-    #a lista dos stabilziers em stab_lit_circuit e eu tenho a lista dos operadores
-    #de bit-flip lógico em stab_lit_comp. Agora, seja um dos operadores de bit-flip
-    #U que será aplicado ao circuito para transformar ele no estado ortogonal. Para
-    #cada S_i do grupo de stabilizer do circuito, será feito US_iU onde o efeito será
-    #trocar ou não a fase global já que U é um operador de Pauli geral. Para saber se
-    #a fase foi trocada, podemos testar a comutação entre U e cada S_i: se eles comutam
-    #a fase não foi trocada, se eles não comutam a fase foi trocada, pois não comutar
-    #significa que U e S_i se interceptam em um número ímpar de letras de Pauli, portanto
-    #o resultado final de US_iU terá um fator -1 multiplicando.
-
-    #O procedimento então é o seguinte: para cada U_i pertecente a stab_lit_comp, eu
-    #testo sua comutatividade para cada S_i pertecente a stab_lit_circuit. Se o
-    #não comutar, eu registro o peso de S_i. No final será o menor peso de todos re-
-    #gistrados. Já que eu calculei o low bound do peso em min_lit, se eu encontrar
-    #um S_i que não comuta com peso igual a min_lit, eu posso parar a busca e já registrar
-    #o peso mínimo
-
-    phase_flip_distance = np.ones(2**N-1)*min_lit
-
-    for i in range(len(stab_lit_comp)):
-        
-        phase_temp = []
-        
-        for j in range(len(stab_lit_circuit)):
-            
-            if uf.pauli_commutation(stab_lit_comp[i,:N],stab_lit_circuit[j,:N]) == -1:
-                
-                phase_temp.append(N - len(uf.find_literal('I',stab_lit_circuit[j,:])))
-                
-                if phase_temp[-1] == min_lit:
-                    break
-                
-        if j == len(stab_lit_circuit)-1:
-            
-            phase_flip_distance[i] = min(phase_temp)
-            
-    f_d = [ 1/(abs(bit_flip_distance[i]-phase_flip_distance[i])+1) for i in range(2**N-1)]        
-
+#versão alternativa onde 2**N pares são testados
+def fitness_qecc(N,circuit,t,errors_literal,affected_qubits,stab_group,gp_group,errors_literal_total,initialOrtCircuits):
+    
     D = sf.depth(N,circuit)
-
-    stab_lit_circuit_set = {tuple(stab_lit_circuit[i,:]) for i in range(2**N-1)}
-
-    fitness = []
-
-    for k in range(2**N-1):
         
-        if f_d[k] == max(f_d):
-
-            stab_group_ort = np.copy(stab_group_circuit)
-            gp_group_ort = np.copy(gp_group_circuit)
+    common_stabilizer_storage = []
+    cdArray = np.zeros(2**N-1)
+    
+    stab_group_circuit, gp_group_circuit, stab_lit_circuit = sf.stabilizer_group(N,circuit,stab_group, gp_group)
+    stab_lit_circuit_set = {tuple(stab_lit_circuit[i,:]) for i in range(2**N-1)}
+    
+    for k in range(2**N-1):
+    #for k in range(10):
+    
+        #building the second codeword
+        circuit1 = initialOrtCircuits[k]
+        circuit1 = np.vstack([circuit1, circuit])
+        circuit1 = circuit1.astype(int)
+        
+        #evaluating the stabilizer group of both codewords
+        
+        stab_group_circuit1, gp_group_circuit1, stab_lit_circuit1 = sf.stabilizer_group(N,circuit1,stab_group, gp_group)
+        
+        #building the common stabilizer list of the codewords
+        
+        stab_lit_ort_set = {tuple(stab_lit_circuit1[i,:]) for i in range(2**N-1)}
+        stab_set = [stab_lit_circuit_set,stab_lit_ort_set]
+        common_stabilizers = stab_lit_circuit_set.intersection(stab_lit_ort_set)
+        common_stabilizers = list(common_stabilizers)
+        common_stabilizers_set = {common_stabilizers[i][:N] for i in range(len(common_stabilizers))}
+        common_stabilizers_list = [list(common_stabilizers[i][:N]) for i in range(len(common_stabilizers))]
+        common_stabilizer_storage.append([common_stabilizers_set,common_stabilizers_list])
+        #calculo do cd
+        cd, t_d, css_group_d, css_d = qf.correctability_degree_color(N,t,errors_literal,affected_qubits,stab_set)
+        #calculo do depth
+        
+        cdArray[k] = cd
+    
+        if cd == 1:
+            break
+        
+    # #evaluating the distance
+    # for k in range(2**N-1):
+        
+    #     if cdArray[k] == max(cdArray):
             
-            bit_flip_operator = stab_lit_comp[k,:N]
+    #         common_stabilizers_set = common_stabilizer_storage[k][0]
+    #         common_stabilizers_list = common_stabilizer_storage[k][1]
             
-            circuit_ort = np.zeros([N - len(uf.find_literal('I',bit_flip_operator)),3])
-
-            count = 0
-            
-            for i in range(N):
+    #         for i in range(len(errors_literal_total)):
                 
-                if bit_flip_operator[i] == 'X':
-                    circuit_ort[count,:] = np.array([4,i,0])
-                    count += 1
+    #             if (tuple(errors_literal_total[i]) in common_stabilizers_set) == False:
                     
-                elif bit_flip_operator[i] == 'Y':
-                    circuit_ort[count,:] = np.array([5,i,0])
-                    count += 1
+    #                 commutationTest = 1
                     
-                elif bit_flip_operator[i] == 'Z':
-                    circuit_ort[count,:] = np.array([6,i,0])
-                    count += 1
-            
-            circuit_ort = circuit_ort.astype(int)
-            
-            ###################################################
-            #applying the bit-flip operator to the circuit   ##
-            ###################################################
-            
-            if len(circuit_ort) != 0:
-            
-                for i in range(len(circuit_ort)): #running through circuit_ort
-                
-                    if circuit_ort[i,0] == 1: #Hadamard
+    #                 j = 0
                     
-                        for j in range(2**N-1):
-                            
-                            if  stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1:
-                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
-                                
-                            temp_x = stab_group_ort[j,2*circuit_ort[i,1]]
-                            stab_group_ort[j,2*circuit_ort[i,1]] = stab_group_ort[j,2*circuit_ort[i,1]+1]
-                            stab_group_ort[j,2*circuit_ort[i,1]+1] = temp_x
-                            
-                    elif circuit_ort[i,0] == 2: #Phase
+    #                 while commutationTest == 1 and j < len(common_stabilizers_list):
                         
-                        for j in range(2**N-1):
-                            
-                            if  stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1:
-                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
+    #                     commutationTest = uf.pauli_commutation(errors_literal_total[i],common_stabilizers_list[j])
+    #                     j += 1
                         
-                            stab_group_ort[j,2*circuit_ort[i,1]+1] = np.mod(stab_group_ort[j,2*circuit_ort[i,1]]+stab_group_ort[j,2*circuit_ort[i,1]+1],2)
+    #                 if commutationTest == 1: #it is a logical operator
                     
-                    elif circuit_ort[i,0] == 3: #CNOT (left)
-                    
-                         for j in range(2**N-1):
-                             
-                            #this if tests if the generator pre-conjugation is Y_1*Y_2 or X_1*Z_2
-                            if (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1 and stab_group_ort[j,2*circuit_ort[i,2]] == 1 and stab_group_ort[j,2*circuit_ort[i,2]+1] == 1) or (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 0 and stab_group_ort[j,2*circuit_ort[i,2]] == 0 and stab_group_ort[j,2*circuit_ort[i,2]+1] == 1):
-                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
-                                
-                    
-                            stab_group_ort[j,2*circuit_ort[i,2]] = np.mod(stab_group_ort[j,2*circuit_ort[i,2]] + stab_group_ort[j,2*circuit_ort[i,1]] ,2)
-                            stab_group_ort[j,2*circuit_ort[i,1]+1] = np.mod(stab_group_ort[j,2*circuit_ort[i,1]+1] + stab_group_ort[j,2*circuit_ort[i,2]+1],2)
-                    
-                    elif circuit_ort[i,0] == 4: #X
-                    
-                        for j in range(2**N-1):
-                            
-                             if (stab_group_ort[j,2*circuit_ort[i,1]] == 0 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1) or (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1):
-                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
-                                
-                    elif circuit_ort[i,0] == 5: #Y
-                    
-                        for j in range(2**N-1):
-                            
-                             if (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 0) or (stab_group_ort[j,2*circuit_ort[i,1]] == 0 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1):
-                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
-                                
-                    elif circuit_ort[i,0] == 6: #Z
-                    
-                        for j in range(2**N-1):
-                            
-                             if (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 0) or (stab_group_ort[j,2*circuit_ort[i,1]] == 1 and stab_group_ort[j,2*circuit_ort[i,1]+1] == 1):
-                                gp_group_ort[j] = np.mod(gp_group_ort[j]+2,4)
-            
-            stab_lit_ort = [['I' for columns in range(N+1)] for rows in range(2**N-1)]
-                
-            for i in range(2**N-1):
-                for j in range(N):
-                    if stab_group_ort[i,2*j] == 0 and stab_group_ort[i,2*j+1] == 1:
-                        stab_lit_ort[i][j] = 'Z'
-                    elif stab_group_ort[i,2*j] == 1 and stab_group_ort[i,2*j+1] == 0:
-                        stab_lit_ort[i][j] = 'X'
-                    elif stab_group_ort[i,2*j] == 1 and stab_group_ort[i,2*j+1] == 1:
-                        stab_lit_ort[i][j] = 'Y'
-                        
-                if gp_group_ort[i] == 0:
-                    stab_lit_ort[i][-1] = '1'
-                elif gp_group_ort[i] == 1:
-                    stab_lit_ort[i][-1] = 'i'
-                elif gp_group_ort[i] == 2:
-                    stab_lit_ort[i][-1] = '-1'
-                else:
-                    stab_lit_ort[i][-1] = '-i'
-                    
-            stab_lit_ort = np.array(stab_lit_ort)
+    #                     distance = weight(errors_literal_total[i])
+    #                     fitnessArray.append(cdArray[k]+1/D+distance)
+    #                     break
 
-            stab_lit_ort_set = {tuple(stab_lit_ort[i,:]) for i in range(2**N-1)}
+    fitness = 1000*max(cdArray) - D
+                    
+    return fitness
 
-            stab_set = [stab_lit_circuit_set,stab_lit_ort_set]
+#versão simplificado onde calculo a distância diretamente pelo grupo
+# def fitness_qecc(N,circuit,t,errors_literal,affected_qubits,stab_group,gp_group,errors_literal_total):
+    
+#     #building the second codeword
+#     circuit1 = np.array([[4,0,0]])
+#     circuit1 = np.vstack([circuit1, circuit])
+    
+#     #evaluating the stabilizer group of both codewords
+#     stab_group_circuit, gp_group_circuit, stab_lit_circuit = sf.stabilizer_group(N,circuit,stab_group, gp_group)
+#     stab_group_circuit1, gp_group_circuit1, stab_lit_circuit1 = sf.stabilizer_group(N,circuit1,stab_group, gp_group)
+    
+#     #building the common stabilizer list of the codewords
+#     stab_lit_circuit_set = {tuple(stab_lit_circuit[i,:]) for i in range(2**N-1)}
+#     stab_lit_ort_set = {tuple(stab_lit_circuit1[i,:]) for i in range(2**N-1)}
+#     stab_set = [stab_lit_circuit_set,stab_lit_ort_set]
+#     common_stabilizers = stab_lit_circuit_set.intersection(stab_lit_ort_set)
+#     common_stabilizers = list(common_stabilizers)
+#     common_stabilizers_set = {common_stabilizers[i][:N] for i in range(len(common_stabilizers))}
+#     common_stabilizers_list = [list(common_stabilizers[i][:N]) for i in range(len(common_stabilizers))]
+    
+#     #evaluating the distance
+#     for i in range(len(errors_literal_total)):
+        
+#         if (tuple(errors_literal_total[i]) in common_stabilizers_set) == False:
             
-            #c_d, t_d, css_group_d, css_d = qf.correctability_degree(N,t,errors_literal,affected_qubits,stab_set)
-            c_d = qf.correctability_degree(N,t,errors_literal,affected_qubits,stab_set)
-            #appending the overall fitness score 
-            fitness.append((1+c_d)**10+1/D+min(bit_flip_distance[k],phase_flip_distance[k]))
+#             commutationTest = 1
             
-            if c_d == 1:
-                break
+#             j = 0
             
-    return(max(fitness))
+#             while commutationTest == 1 and j < len(common_stabilizers_list):
+                
+#                 commutationTest = uf.pauli_commutation(errors_literal_total[i],common_stabilizers_list[j])
+#                 j += 1
+                
+#             if commutationTest == 1: #it is a logical operator
+            
+#                 distance = weight(errors_literal_total[i])
+#                 break
+                
+#     #calculo do cd
+#     cd = qf.correctability_degree(N,t,errors_literal,affected_qubits,stab_set)
+#     #calculo do depth
+#     D = sf.depth(N,circuit)
+    
+#     #calculo final da fitness
+    
+#     if D == 0:
+        
+#         fitness = 0
+        
+#     else:
+        
+#         #fitness = (1+cd)**2+1/D+distance #standard qecc fitness
+#         fitness = cd + 1/D + distance #standard qecc fitness
+
+#     return fitness
+
+def fitness_color(N,circuit,t,errors_literal,affected_qubits,stab_group,gp_group,errors_literal_total,stab_group_X):
+    
+    fitnessArray = []
+    
+    for k in range(2**N-1):
+    
+        #building the second codeword
+        circuit1 = np.zeros([N,3])
+        for i in range(N):
+            circuit1[i,:] = np.array([stab_group_X[k,2*i]*4,i,0])
+
+        circuit1 = np.vstack([circuit1, circuit])
+        circuit1 = circuit1.astype(int)
+        
+        #evaluating the stabilizer group of both codewords
+        stab_group_circuit, gp_group_circuit, stab_lit_circuit = sf.stabilizer_group(N,circuit,stab_group, gp_group)
+        stab_group_circuit1, gp_group_circuit1, stab_lit_circuit1 = sf.stabilizer_group(N,circuit1,stab_group, gp_group)
+        
+        #building the common stabilizer list of the codewords
+        stab_lit_circuit_set = {tuple(stab_lit_circuit[i,:]) for i in range(2**N-1)}
+        stab_lit_ort_set = {tuple(stab_lit_circuit1[i,:]) for i in range(2**N-1)}
+        stab_set = [stab_lit_circuit_set,stab_lit_ort_set]
+        common_stabilizers = stab_lit_circuit_set.intersection(stab_lit_ort_set)
+        common_stabilizers = list(common_stabilizers)
+        common_stabilizers_set = {common_stabilizers[i][:N] for i in range(len(common_stabilizers))}
+        common_stabilizers_list = [list(common_stabilizers[i][:N]) for i in range(len(common_stabilizers))]
+        
+        #evaluating the distance
+        for i in range(len(errors_literal_total)):
+            
+            if (tuple(errors_literal_total[i]) in common_stabilizers_set) == False:
+                
+                commutationTest = 1
+                
+                j = 0
+                
+                while commutationTest == 1 and j < len(common_stabilizers_list):
+                    
+                    commutationTest = uf.pauli_commutation(errors_literal_total[i],common_stabilizers_list[j])
+                    j += 1
+                    
+                if commutationTest == 1: #it is a logical operator
+                
+                    distance = weight(errors_literal_total[i])
+                    break
+                    
+        #calculo do cd
+        cd, t_d, css_group_d, css_d = qf.correctability_degree_color(N,t,errors_literal,affected_qubits,stab_set)
+        #calculo do depth
+        D = sf.depth(N,circuit)
+        
+        #calculo final da fitness
+        fitnessArray.append((1+cd)**10+(1+css_d)**10+1/D+distance) #color fitness
+        
+        if cd == 1 and css_d == 1:
+            break
+        
+    return max(fitnessArray)
 
 def fitness_toy(N,circ):
     D = sf.depth(N,circ)
@@ -306,7 +224,10 @@ def fitness_toy(N,circ):
 
 def mutation(circ,N,adj_mat):
     
-    new_gene_test = np.random.randint(0,2) #if 0 an old gene is select to be mutated, if 1 a new gene is inserted at a random point
+    if len(circ) == 0:
+        new_gene_test = 1
+    else:
+        new_gene_test = np.random.randint(0,2) #if 0 an old gene is select to be mutated, if 1 a new gene is inserted at a random point
     
     if new_gene_test == 0:
     
@@ -371,20 +292,27 @@ def mutation(circ,N,adj_mat):
     #if the fitness function can spawn zero fitness-valued individuals, the above code may fail, i.e.,
     #it generates an empty selected_idx list. If this happens, random individuals are sampled from the
     #population.
-    if len(selected_idx) == 0:
+    # if len(selected_idx) == 0:
 
-        selected_idx = random.sample(range(len(population)),n_ind)                
+    #     selected_idx = random.sample(range(len(population)),n_ind)                
         
     return new_circ.astype(int)
 
 def crossover(population,selected_idx):
-
-    cut_point_A = np.random.randint(0,len(population[selected_idx[0]][0]))
-    cut_point_B = np.random.randint(0,len(population[selected_idx[1]][0]))
     
-    offspring_A = np.vstack([ population[selected_idx[0]][0][:cut_point_A,:]  , population[selected_idx[1]][0][cut_point_B:,:]  ])
-    offspring_B = np.vstack([ population[selected_idx[1]][0][:cut_point_B,:]  , population[selected_idx[0]][0][cut_point_A:,:]  ])
-                 
+    if len(population[selected_idx[0]][0]) == 0 or len(population[selected_idx[1]][0]) == 0:
+        
+        offspring_A = population[selected_idx[0]][0]
+        offspring_B = population[selected_idx[1]][0]
+                       
+    else:
+        
+        cut_point_A = np.random.randint(0,len(population[selected_idx[0]][0]))
+        cut_point_B = np.random.randint(0,len(population[selected_idx[1]][0]))
+        
+        offspring_A = np.vstack([ population[selected_idx[0]][0][:cut_point_A,:]  , population[selected_idx[1]][0][cut_point_B:,:]  ])
+        offspring_B = np.vstack([ population[selected_idx[1]][0][:cut_point_B,:]  , population[selected_idx[0]][0][cut_point_A:,:]  ])
+                     
     
     return offspring_A, offspring_B
 
@@ -393,7 +321,7 @@ def crossover(population,selected_idx):
 ## SELECTION FUNCTIONS ##
 #########################
 
-def refresh_population(population,M,N,T,adj_mat,t,errors_literal,affected_qubits,death_rate,stab_group, gp_group,stab_group_X, gp_group_X):
+def refresh_population(population,M,N,T,adj_mat,t,errors_literal,affected_qubits,death_rate,stab_group, gp_group):
         
     
     fitness_array = np.zeros([len(population),2])
@@ -414,7 +342,7 @@ def refresh_population(population,M,N,T,adj_mat,t,errors_literal,affected_qubits
     for i in range(int(M*death_rate)):
         
         rand_circuit = sf.randcirc(N,T,adj_mat)
-        fitness = fitness_qecc(N,rand_circuit,t,errors_literal,affected_qubits,stab_group, gp_group,stab_group_X, gp_group_X)
+        fitness = fitness_qecc(N,rand_circuit,t,errors_literal,affected_qubits,stab_group, gp_group)
     
         individual = [rand_circuit,fitness]
         population.append(individual)
@@ -494,7 +422,7 @@ def ind_selection(n_ind,population):
 ###################
 
 
-def circle_of_life(progenitors,population,N,adj_mat,mutation_rate,crossover_rate,t,errors_literal,affected_qubits,mutation_density,stab_group, gp_group,stab_group_X, gp_group_X):    
+def circle_of_life(progenitors,population,N,adj_mat,mutation_rate,crossover_rate,t,errors_literal,affected_qubits,mutation_density,stab_group, gp_group,errors_literal_total):    
 
     #select progenitors
     selected_idx = ind_selection(progenitors,population)
@@ -531,8 +459,57 @@ def circle_of_life(progenitors,population,N,adj_mat,mutation_rate,crossover_rate
             offspring_B = mutation(offspring_B,N,adj_mat)
         
     #calculate fitness and add offspring to population
-    fitness_A = fitness_qecc(N,offspring_A,t,errors_literal,affected_qubits,stab_group, gp_group,stab_group_X, gp_group_X)
-    fitness_B = fitness_qecc(N,offspring_B,t,errors_literal,affected_qubits,stab_group, gp_group,stab_group_X, gp_group_X)
+    fitness_A = fitness_qecc(N,offspring_A,t,errors_literal,affected_qubits,stab_group, gp_group,errors_literal_total)
+    fitness_B = fitness_qecc(N,offspring_B,t,errors_literal,affected_qubits,stab_group, gp_group,errors_literal_total)
+    
+    population.append([offspring_A,fitness_A])
+    population.append([offspring_B,fitness_B])
+
+    return population
+
+def circle_of_life_color(progenitors,population,N,adj_mat,mutation_rate,crossover_rate,t,errors_literal,affected_qubits,mutation_density,stab_group, gp_group,errors_literal_total,initialOrtCircuits):    
+
+    #select progenitors
+    selected_idx = ind_selection(progenitors,population)
+    
+    #breed
+    crossover_test = random.uniform(0.0,1)
+    if crossover_test <= crossover_rate:
+    
+        offspring_A, offspring_B = crossover(population,selected_idx)
+    
+    else:
+        
+        offspring_A = np.copy(population[selected_idx[0]][0])
+        offspring_B = np.copy(population[selected_idx[1]][0])
+    
+    #mutate
+    mutation_test_A = random.uniform(0.0,1)
+    mutation_test_B = random.uniform(0.0,1)
+    
+    if mutation_test_A <= mutation_rate:
+        
+        n_mut = random.sample(mutation_density, 1)[0]
+        
+        for i in range(n_mut):
+        
+            offspring_A = mutation(offspring_A,N,adj_mat)
+        
+    if mutation_test_B <= mutation_rate:
+        
+        n_mut = random.sample(mutation_density, 1)[0]
+        
+        for i in range(n_mut):
+        
+            offspring_B = mutation(offspring_B,N,adj_mat)
+        
+    #calculate fitness and add offspring to population
+    #fitness_A = fitness_color(N,offspring_A,t,errors_literal,affected_qubits,stab_group, gp_group,errors_literal_total,initialOrtCircuits)
+    #fitness_B = fitness_color(N,offspring_B,t,errors_literal,affected_qubits,stab_group, gp_group,errors_literal_total,initialOrtCircuits)
+    fitness_A = fitness_qecc(N,offspring_A,t,errors_literal,affected_qubits,stab_group, gp_group,errors_literal_total,initialOrtCircuits)
+    fitness_B = fitness_qecc(N,offspring_B,t,errors_literal,affected_qubits,stab_group, gp_group,errors_literal_total,initialOrtCircuits)
+    
+    
     
     population.append([offspring_A,fitness_A])
     population.append([offspring_B,fitness_B])
