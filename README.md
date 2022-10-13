@@ -17,13 +17,6 @@ Summary
 <!--ts-->
    * [About](#about)
    * [Publications](#publications)
-   * [Requirements](#requirements)
-   * [Tutorial](#tutorial)
-   * [List of functions](#list-of-functions)
-      * [Stabilizer functions](#stabilizer-functions)
-      * [Evolution functions](#evolution-functions)
-      * [QECC functions](#qecc-functions)
-      * [Utility functions](#utility-functions)
    * [Author](#author)
 
 <!--te-->
